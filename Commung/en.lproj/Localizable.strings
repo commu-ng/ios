@@ -1,0 +1,330 @@
+/* App */
+"app.name" = "Commung";
+
+/* Authentication */
+"auth.login_name" = "Login Name";
+"auth.password" = "Password";
+"auth.login" = "Login";
+"auth.logout" = "Logout";
+"auth.logout_confirm_title" = "Logout";
+"auth.logout_confirm_message" = "Are you sure you want to logout?";
+"auth.sign_in" = "Sign In";
+"auth.sign_up" = "Sign Up";
+"auth.create_account" = "Create Account";
+"auth.already_have_account" = "Already have an account?";
+"auth.no_account" = "Don't have an account?";
+"auth.password_min_length" = "Password must be at least 8 characters";
+"auth.passwords_not_match" = "Passwords do not match";
+
+/* Navigation */
+"nav.boards" = "Boards";
+"nav.my_communities" = "My Communities";
+"nav.recruiting" = "Recruiting";
+"nav.profile" = "Profile";
+"nav.post" = "Post";
+"nav.notifications" = "Notifications";
+
+/* Loading */
+"loading.default" = "Loading...";
+"loading.app" = "Loading...";
+"loading.board" = "Loading board...";
+"loading.boards" = "Loading boards...";
+"loading.posts" = "Loading posts...";
+"loading.post" = "Loading post...";
+"loading.communities" = "Loading communities...";
+"loading.recruiting_communities" = "Loading recruiting communities...";
+
+/* Empty States */
+"empty.no_boards" = "No boards available";
+"empty.no_posts" = "No posts yet";
+"empty.no_comments" = "No comments yet";
+"empty.no_communities" = "No communities yet";
+"empty.no_recruiting" = "No recruiting communities";
+"empty.communities_message" = "Join communities to see them here";
+"empty.recruiting_message" = "Check back later for new communities";
+
+/* Errors */
+"error.loading_posts" = "Error loading posts";
+"error.loading_post" = "Error loading post";
+"error.post_not_found" = "Post not found";
+"error.image_load_failed" = "Failed to load image";
+"error.delete_failed" = "Delete Failed";
+"error.delete_failed_message" = "Failed to delete the post. Please try again.";
+
+/* Actions */
+"action.retry" = "Retry";
+"action.clear_all" = "Clear all";
+
+/* Hashtags */
+"hashtag.popular" = "Popular:";
+"hashtag.filters" = "Filters:";
+
+/* Status */
+"status.active" = "Active";
+"status.ended" = "Ended";
+"status.recruiting" = "Recruiting";
+"status.admin" = "Admin";
+
+/* Profile */
+"profile.my_communities" = "My Communities";
+"profile.no_communities" = "No communities";
+
+/* Notifications */
+"notifications.empty" = "No notifications yet";
+
+/* Time */
+"time.just_now" = "just now";
+"time.minutes_ago" = "%dm ago";
+"time.hours_ago" = "%dh ago";
+"time.days_ago" = "%dd ago";
+
+/* Comments */
+"comments.title" = "Comments";
+
+/* Markdown Help */
+"markdown.guide_title" = "Markdown Guide";
+"markdown.done" = "Done";
+"markdown.text_formatting" = "Text Formatting";
+"markdown.bold" = "Bold text";
+"markdown.italic" = "Italic text";
+"markdown.strikethrough" = "Strikethrough text";
+"markdown.inline_code" = "Inline code";
+"markdown.headings" = "Headings";
+"markdown.links" = "Links";
+"markdown.create_links" = "Create clickable links";
+"markdown.auto_links" = "URLs are automatically converted to links";
+"markdown.images" = "Images";
+"markdown.insert_image" = "Insert an image";
+"markdown.image_upload_tip" = "You can also use the image upload button";
+"markdown.lists" = "Lists";
+"markdown.unordered_list" = "Unordered list:";
+"markdown.ordered_list" = "Ordered list:";
+"markdown.blockquotes" = "Blockquotes";
+"markdown.code_blocks" = "Code Blocks";
+"markdown.line_breaks" = "Line Breaks";
+"markdown.line_breaks_tip" = "To create a new paragraph, leave a blank line between text:";
+"markdown.preview_empty" = "Nothing to preview yet. Start writing in the Edit tab.";
+"markdown.edit" = "Edit";
+"markdown.preview" = "Preview";
+
+/* Post Actions */
+"post.delete" = "Delete";
+"post.delete_confirm_title" = "Delete Post";
+"post.delete_confirm_message" = "Are you sure you want to delete this post?";
+"post.delete_success" = "Post deleted successfully";
+"comment.delete_confirm_title" = "Delete Comment";
+"comment.delete_confirm_message" = "Are you sure you want to delete this comment?";
+"comment.delete_success" = "Comment deleted successfully";
+"action.cancel" = "Cancel";
+
+/* Post Creation */
+"post.create_title" = "Create New Post";
+"post.info_section" = "Post Information";
+"post.title_placeholder" = "Title";
+"post.content_section" = "Content";
+"post.community_type_section" = "Community Type (Optional)";
+"post.community_type_placeholder" = "None Selected";
+"post.community_type_description" = "Selected community type will be automatically added as a hashtag";
+"post.hashtags_section" = "Hashtags (comma separated)";
+"post.hashtags_placeholder" = "Example: tag1, tag2, tag3";
+"post.image_section" = "Image";
+"post.submit" = "Post";
+
+/* Images */
+"image.uploading" = "Uploading image...";
+"image.remove" = "Remove Image";
+"image.select" = "Select Image";
+"image.load_error" = "Cannot load image";
+
+/* Markdown */
+"markdown.help_button" = "Markdown Help";
+
+/* Comments/Replies */
+"comment.placeholder" = "Write a comment...";
+"comment.reply_button" = "Reply";
+"comment.replying_to" = "Replying to @%@";
+"comment.replies_count" = "%d replies";
+"comment.load_more" = "Load More";
+"comment.post_button" = "Post";
+"comment.collapsed_replies" = "%d hidden replies";
+
+/* Network Errors */
+"error.invalid_url" = "Invalid URL";
+"error.invalid_response" = "Invalid response from server";
+"error.unauthorized" = "Unauthorized. Please log in again.";
+"error.decoding_failed" = "Failed to decode response";
+"error.generic" = "Error: %@";
+
+/* App Mode */
+"nav.home" = "Home";
+"nav.messages" = "Messages";
+"nav.console" = "Console";
+"nav.app" = "App";
+"nav.communities" = "Communities";
+"nav.account" = "Account";
+
+/* Account Settings */
+"account.title" = "Account";
+"account.information" = "Account Information";
+"account.login_name" = "Login Name";
+"account.email" = "Email";
+"account.verified" = "Verified";
+"account.not_verified" = "Not Verified";
+"account.add_email" = "Add Email";
+"account.member_since" = "Member Since";
+"account.security" = "Security";
+"account.change_password" = "Change Password";
+"account.change_email" = "Change Email";
+"account.data" = "Data";
+"account.export_data" = "Export My Data";
+"account.log_out" = "Log Out";
+"account.delete_account" = "Delete Account";
+"account.delete_confirm_title" = "Delete Account";
+"account.delete_confirm_message" = "Are you sure you want to permanently delete your account? This action cannot be undone.";
+"account.current_password" = "Current Password";
+"account.new_password" = "New Password";
+"account.confirm_password" = "Confirm Password";
+"account.password_hint" = "Password must be at least 8 characters";
+"account.passwords_mismatch" = "Passwords do not match";
+"account.new_email" = "New Email";
+"account.current_email" = "Current Email";
+"account.verification_hint" = "A verification email will be sent to your new email address.";
+"account.send_verification" = "Send Verification";
+"account.export_success" = "Export requested. You'll receive an email when it's ready.";
+"account.verification_sent" = "Verification email sent! Please check your inbox.";
+
+/* Profile */
+"profile.title" = "Profile";
+"profile.edit" = "Edit Profile";
+"profile.primary" = "Primary";
+"profile.current_community" = "Current Community";
+"profile.switch_profile" = "Switch Profile";
+"profile.profiles_available" = "%d profiles available";
+"profile.quick_actions" = "Quick Actions";
+"profile.bookmarks" = "Bookmarks";
+"profile.search_posts" = "Search Posts";
+"profile.scheduled_posts" = "Scheduled Posts";
+"profile.no_profile" = "No Profile";
+"profile.select_community" = "Select a community to view your profile";
+"profile.uploading" = "Uploading...";
+"profile.display_name" = "Display Name";
+"profile.username" = "Username";
+"profile.username_valid" = "Username is valid";
+"profile.bio" = "Bio";
+"profile.bio_placeholder" = "Tell us about yourself...";
+"profile.no_posts" = "No posts yet";
+"profile.send_message" = "Send Message";
+
+/* Communities */
+"communities.title" = "Communities";
+"communities.my_communities" = "My Communities";
+"communities.pending" = "%d pending";
+"communities.no_communities" = "No Communities";
+"communities.join_message" = "Join a community to get started";
+
+/* Roles */
+"role.owner" = "Owner";
+"role.admin" = "Admin";
+"role.moderator" = "Moderator";
+"role.member" = "Member";
+
+/* Messages */
+"messages.title" = "Messages";
+"messages.no_community" = "No Community Selected";
+"messages.select_community" = "Please select a community from the Profile tab.";
+"messages.no_profile" = "No Profile Selected";
+"messages.loading_profile" = "Loading your profile...";
+"messages.no_messages" = "No Messages";
+"messages.start_conversation" = "Start a conversation!";
+"messages.unread" = "%d unread";
+"messages.members" = "%d members";
+"messages.type_message" = "Type a message...";
+"messages.load_earlier" = "Load earlier messages";
+"messages.add_reaction" = "Add Reaction";
+"messages.new_message" = "New Message";
+"messages.no_profiles" = "No profiles available";
+
+/* Group Chat */
+"group.chat" = "Group Chat";
+"group.members" = "Group Members";
+"group.new" = "New Group Chat";
+"group.name" = "Group Name";
+"group.name_placeholder" = "Enter group name";
+"group.select_members" = "Select Members";
+"group.no_profiles" = "No profiles available";
+"group.create" = "Create";
+
+/* Announcements */
+"announcements.title" = "Announcements";
+"announcements.empty" = "No Announcements";
+"announcements.empty_description" = "Announcements from community administrators will appear here.";
+
+/* Search */
+"search.title" = "Search";
+"search.posts" = "Search Posts";
+"search.min_chars" = "Enter at least 2 characters to search.";
+"search.min_chars_short" = "Enter at least 2 characters";
+"search.no_results" = "No Results";
+"search.no_posts_matching" = "No posts found matching '%@'.";
+"search.prompt" = "Search posts";
+"search.by_name" = "Search by name or username...";
+"search.results" = "%d results for \"%@\"";
+
+/* Bookmarks */
+"bookmarks.title" = "Bookmarks";
+"bookmarks.no_bookmarks" = "No Bookmarks";
+"bookmarks.empty_message" = "Posts you bookmark will appear here.";
+
+/* Scheduled Posts */
+"scheduled.title" = "Scheduled Posts";
+"scheduled.no_posts" = "No Scheduled Posts";
+"scheduled.empty_message" = "Posts you schedule will appear here";
+"scheduled.delete_title" = "Delete Scheduled Post";
+"scheduled.delete_message" = "This scheduled post will be permanently deleted.";
+"scheduled.images" = "%d image(s)";
+"scheduled.load_more" = "Load More";
+
+/* Post Composer */
+"composer.new_post" = "New Post";
+"composer.reply" = "Reply";
+"composer.replying_to" = "Replying to @%@";
+"composer.content" = "Content";
+"composer.content_warning" = "Content Warning (Optional)";
+"composer.cw_placeholder" = "Sensitive content warning";
+"composer.cw_hint" = "Warning text (e.g., 'spoilers', 'sensitive content')";
+"composer.schedule_future" = "Scheduled time must be in the future";
+"composer.uploading_images" = "Uploading images...";
+"composer.schedule_post" = "Schedule Post";
+"composer.announcement" = "Announcement";
+"composer.add_images" = "Add Images";
+"composer.markdown_syntax" = "Markdown Syntax";
+
+/* Member Directory */
+"members.title" = "Members";
+"members.no_members" = "No members yet";
+"members.no_results" = "No results found";
+"members.no_matches" = "No matches for \"%@\"";
+"members.show_all" = "Show all members";
+"members.total" = "%d total members";
+
+/* Share Post */
+"share.title" = "Share Post";
+"share.search" = "Search conversations...";
+"share.no_conversations" = "No conversations yet";
+"share.add_message" = "Add a message (optional)";
+"share.send" = "Send";
+
+/* Common Actions */
+"action.done" = "Done";
+"action.save" = "Save";
+"action.delete" = "Delete";
+"action.post" = "Post";
+"action.ok" = "OK";
+
+/* Post */
+"post.edited" = "edited";
+"post.sensitive_content" = "Sensitive Content";
+"post.show_content" = "Show";
+
+/* Reactions */
+"reaction.add" = "Add Reaction";
