@@ -135,8 +135,8 @@ struct CommunityRow: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                if community.pendingApplicationCount > 0 {
-                    Text(String(format: NSLocalizedString("communities.pending", comment: ""), community.pendingApplicationCount))
+                if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
+                    Text(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount))
                         .font(.caption2)
                         .foregroundColor(.orange)
                 }

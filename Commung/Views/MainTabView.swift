@@ -139,8 +139,9 @@ struct MainTabView: View {
                     Label(NSLocalizedString("nav.boards", comment: ""), systemImage: "list.bullet")
                 }
 
-            // Communities
-            ConsoleCommunitiesView()
+            // Communities (merged browse + my communities)
+            CommunitiesTabView()
+                .environmentObject(communityContext)
                 .environmentObject(appModeContext)
                 .tabItem {
                     Label(NSLocalizedString("nav.communities", comment: ""), systemImage: "person.3.fill")

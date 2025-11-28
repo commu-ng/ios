@@ -93,8 +93,8 @@ struct ConsoleCommunityCard: View {
             }
 
             // Pending applications badge
-            if community.pendingApplicationCount > 0 {
-                Label(String(format: NSLocalizedString("communities.pending", comment: ""), community.pendingApplicationCount), systemImage: "person.badge.clock")
+            if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
+                Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)

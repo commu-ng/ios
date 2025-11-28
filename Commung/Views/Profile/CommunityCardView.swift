@@ -47,13 +47,15 @@ struct CommunityCardView: View {
                         Spacer()
 
                         // Role badge
-                        Text(community.role.capitalized)
-                            .font(.caption)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(roleBadgeColor(for: community.role))
-                            .cornerRadius(4)
+                        if let role = community.role {
+                            Text(role.capitalized)
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(roleBadgeColor(for: role))
+                                .cornerRadius(4)
+                        }
                     }
 
                     // Hashtags

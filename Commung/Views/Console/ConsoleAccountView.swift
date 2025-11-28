@@ -99,7 +99,7 @@ struct ConsoleAccountView: View {
                 Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) {}
                 Button(NSLocalizedString("auth.logout", comment: ""), role: .destructive) {
                     Task {
-                        await viewModel.logout()
+                        await authViewModel.logout()
                     }
                 }
             } message: {

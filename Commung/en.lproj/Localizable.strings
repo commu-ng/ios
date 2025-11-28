@@ -230,6 +230,7 @@
 /* Communities */
 "communities.title" = "Communities";
 "communities.my_communities" = "My Communities";
+"communities.my_communities_description" = "Communities you've joined";
 "communities.pending" = "%d pending";
 "communities.no_communities" = "No Communities";
 "communities.join_message" = "Join a community to get started";
@@ -340,3 +341,58 @@
 
 /* Reactions */
 "reaction.add" = "Add Reaction";
+
+/* Browse Communities */
+"browse.title" = "Browse";
+"browse.recruiting" = "Recruiting";
+"browse.recruiting_description" = "Communities currently recruiting new members";
+"browse.ongoing" = "Ongoing";
+"browse.ongoing_description" = "Active communities not currently recruiting";
+"browse.no_communities" = "No Communities";
+"browse.no_communities_message" = "No communities are currently available";
+
+/* Community Detail */
+"community.description" = "Description";
+"community.links" = "Links";
+"community.apply" = "Apply to Join";
+"community.visit" = "Visit Community";
+
+/* Community Application */
+"application.title" = "Apply to Join";
+"application.my_applications" = "My Applications";
+"application.rejection_reason" = "Rejection reason";
+"application.reapply" = "Apply Again";
+"application.form_title" = "Application Form";
+"application.form_description" = "Fill out the form to apply. Your application will be reviewed by the community moderators.";
+"application.profile_name" = "Profile Name";
+"application.profile_name_placeholder" = "Enter your display name";
+"application.profile_name_hint" = "This name will be displayed in the community";
+"application.profile_username" = "Profile ID";
+"application.profile_username_placeholder" = "username (letters, numbers, underscore only)";
+"application.message" = "Message (Optional)";
+"application.message_hint" = "Introduce yourself or explain why you want to join";
+"application.submitting" = "Submitting...";
+"application.submit" = "Submit Application";
+"application.success_title" = "Application Submitted!";
+"application.success_message" = "Your application has been submitted. You will be notified when it is reviewed.";
+"application.status_pending" = "Pending";
+"application.status_approved" = "Approved";
+"application.status_rejected" = "Rejected";
+
+/* Applications Management */
+"applications.title" = "Applications";
+"applications.empty" = "No Applications";
+"applications.empty_description" = "There are no applications for this community yet.";
+"applications.pending" = "Pending";
+"applications.reviewed" = "Reviewed";
+"applications.applied_on" = "Applied on";
+"applications.reviewed_on" = "Reviewed on";
+"applications.message" = "Message";
+"applications.rejection_reason_label" = "Rejection Reason";
+"applications.detail_title" = "Application";
+"applications.approve" = "Approve";
+"applications.approving" = "Approving...";
+"applications.reject" = "Reject";
+"applications.reject_title" = "Reject Application";
+"applications.reject_message" = "Optionally provide a reason for rejection.";
+"applications.rejection_reason_placeholder" = "Reason (optional)";
