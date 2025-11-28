@@ -148,14 +148,6 @@ class ConsoleAccountViewModel: ObservableObject {
         isLoading = false
     }
 
-    func logout() async {
-        do {
-            try await AccountService.shared.logout()
-        } catch {
-            errorMessage = "Failed to logout: \(error.localizedDescription)"
-        }
-    }
-
     func deleteAccount() async {
         errorMessage = nil
 
