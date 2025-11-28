@@ -15,6 +15,12 @@
 "auth.no_account" = "Don't have an account?";
 "auth.password_min_length" = "Password must be at least 8 characters";
 "auth.passwords_not_match" = "Passwords do not match";
+"auth.policy_agreement_prefix" = "I agree to the";
+"auth.privacy_policy" = "Privacy Policy";
+"auth.and" = "and";
+"auth.community_guidelines" = "Community Guidelines";
+"auth.policy_agreement_suffix" = "";
+"auth.policy_agreement_required" = "Please agree to the Privacy Policy and Community Guidelines";
 
 /* Navigation */
 "nav.boards" = "Boards";
