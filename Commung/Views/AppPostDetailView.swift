@@ -219,6 +219,9 @@ struct PostCardView: View {
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
     @State private var contentRevealed = false
+    @State private var showReportSheet = false
+    @State private var reportReason = ""
+    @State private var isReporting = false
 
     private var isOwnPost: Bool {
         post.author.id == profileContext.currentProfileId
@@ -410,13 +413,21 @@ struct PostCardView: View {
                     )
                 }
 
-                // More options menu for own posts
-                if isOwnPost {
+                // More options menu
+                if profileContext.currentProfileId != nil {
                     Menu {
-                        Button(role: .destructive) {
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label(NSLocalizedString("action.delete", comment: ""), systemImage: "trash")
+                        if isOwnPost {
+                            Button(role: .destructive) {
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label(NSLocalizedString("action.delete", comment: ""), systemImage: "trash")
+                            }
+                        } else {
+                            Button {
+                                showReportSheet = true
+                            } label: {
+                                Label(NSLocalizedString("action.report", comment: ""), systemImage: "flag")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -436,6 +447,69 @@ struct PostCardView: View {
         } message: {
             Text(NSLocalizedString("post.delete_confirm_message", comment: ""))
         }
+        .sheet(isPresented: $showReportSheet) {
+            NavigationView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(NSLocalizedString("report.description", comment: ""))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    TextEditor(text: $reportReason)
+                        .frame(minHeight: 150)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
+
+                    Text("\(reportReason.count)/2000")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle(NSLocalizedString("report.title", comment: ""))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(NSLocalizedString("action.cancel", comment: "")) {
+                            showReportSheet = false
+                            reportReason = ""
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(NSLocalizedString("action.submit", comment: "")) {
+                            Task {
+                                await submitReport()
+                            }
+                        }
+                        .disabled(reportReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isReporting)
+                    }
+                }
+            }
+            .presentationDetents([.medium])
+        }
+    }
+
+    private func submitReport() async {
+        guard let profileId = profileContext.currentProfileId else { return }
+
+        isReporting = true
+
+        do {
+            try await PostService.shared.reportPost(
+                postId: post.id,
+                profileId: profileId,
+                reason: reportReason.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            showReportSheet = false
+            reportReason = ""
+        } catch {
+            print("Failed to report post: \(error)")
+        }
+
+        isReporting = false
     }
 
     private func deletePost() async {

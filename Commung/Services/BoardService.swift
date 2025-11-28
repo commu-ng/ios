@@ -220,4 +220,27 @@ class BoardService {
         )
         return response.data
     }
+
+    func reportPost(
+        boardSlug: String,
+        postId: String,
+        reason: String
+    ) async throws {
+        struct ReportRequest: Codable {
+            let reason: String
+        }
+
+        struct ReportResponse: Codable {
+            let success: Bool
+        }
+
+        let body = ReportRequest(reason: reason)
+
+        let _: ReportResponse = try await APIClient.shared.request(
+            endpoint: "/console/board/\(boardSlug)/posts/\(postId)/report",
+            method: "POST",
+            body: body,
+            requiresAuth: true
+        )
+    }
 }

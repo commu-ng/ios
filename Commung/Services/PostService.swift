@@ -236,6 +236,20 @@ class PostService {
         return response.data
     }
 
+    // MARK: - Report Post
+
+    func reportPost(postId: String, profileId: String, reason: String) async throws {
+        let url = URL(string: "\(APIClient.apiBaseURL)/app/posts/\(postId)/report")!
+
+        struct ReportRequest: Codable {
+            let reason: String
+            let profileId: String
+        }
+
+        let request = ReportRequest(reason: reason, profileId: profileId)
+        let _: EmptyResponse = try await APIClient.shared.post(url: url, body: request)
+    }
+
     // MARK: - Image Upload
 
     func uploadImage(imageData: Data, filename: String) async throws -> CommunityPostImage {

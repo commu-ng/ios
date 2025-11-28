@@ -116,6 +116,12 @@
 "comment.delete_confirm_message" = "정말 이 댓글을 삭제하시겠습니까?";
 "comment.delete_success" = "댓글이 삭제되었습니다";
 "action.cancel" = "취소";
+"action.report" = "신고";
+"action.submit" = "제출";
+
+/* Report */
+"report.title" = "게시물 신고";
+"report.description" = "이 게시물을 신고하는 이유를 입력해주세요.";
 
 /* Post Creation */
 "post.create_title" = "새 게시물 작성";
