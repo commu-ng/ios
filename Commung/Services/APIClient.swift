@@ -86,6 +86,14 @@ class APIClient {
             throw NetworkError.serverError("Client error: \(httpResponse.statusCode)")
         }
 
+        // Handle 204 No Content
+        if httpResponse.statusCode == 204 || data.isEmpty {
+            if T.self == EmptyResponse.self {
+                print("✅ API Success (No Content): \(url.absoluteString)")
+                return EmptyResponse() as! T
+            }
+        }
+
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase

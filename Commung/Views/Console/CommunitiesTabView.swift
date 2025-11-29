@@ -11,6 +11,8 @@ struct CommunitiesTabView: View {
     @State private var browseErrorMessage: String?
     @State private var selectedCommunity: Community?
     @State private var applicationsForCommunity: Community?
+    @State private var communityToEdit: Community?
+    @State private var showCreateCommunity = false
 
     var body: some View {
         NavigationView {
@@ -23,6 +25,9 @@ struct CommunitiesTabView: View {
                                 community: community,
                                 onApplicationsTapped: {
                                     applicationsForCommunity = community
+                                },
+                                onEditTapped: {
+                                    communityToEdit = community
                                 }
                             )
                                 .onTapGesture {
@@ -152,6 +157,13 @@ struct CommunitiesTabView: View {
             .listStyle(.plain)
             .navigationTitle(NSLocalizedString("nav.communities", comment: ""))
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showCreateCommunity = true }) {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                }
+            }
             .refreshable {
                 await communityContext.loadCommunities()
                 await loadBrowseCommunities()
@@ -170,6 +182,14 @@ struct CommunitiesTabView: View {
         }
         .sheet(item: $applicationsForCommunity) { community in
             ApplicationsListView(community: community)
+        }
+        .sheet(isPresented: $showCreateCommunity) {
+            CommunityCreationView()
+                .environmentObject(communityContext)
+        }
+        .sheet(item: $communityToEdit) { community in
+            CommunityEditView(community: community)
+                .environmentObject(communityContext)
         }
     }
 
@@ -195,6 +215,7 @@ struct CommunitiesTabView: View {
 struct MyCommunityRow: View {
     let community: Community
     var onApplicationsTapped: (() -> Void)?
+    var onEditTapped: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -238,20 +259,37 @@ struct MyCommunityRow: View {
                     .font(.caption)
             }
 
-            // Pending applications badge
-            if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
-                Button(action: {
-                    onApplicationsTapped?()
-                }) {
-                    Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.2))
-                        .foregroundColor(.orange)
-                        .cornerRadius(6)
+            // Actions row
+            HStack(spacing: 8) {
+                // Pending applications badge
+                if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
+                    Button(action: {
+                        onApplicationsTapped?()
+                    }) {
+                        Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.orange.opacity(0.2))
+                            .foregroundColor(.orange)
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+
+                Spacer()
+
+                // Edit button (only for owner)
+                if community.role == "owner" {
+                    Button(action: {
+                        onEditTapped?()
+                    }) {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
         .padding()

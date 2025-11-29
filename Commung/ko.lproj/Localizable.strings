@@ -399,3 +399,61 @@
 "applications.reject_title" = "가입 신청 거절";
 "applications.reject_message" = "거절 사유를 입력해주세요 (선택사항).";
 "applications.rejection_reason_placeholder" = "사유 (선택사항)";
+
+/* Community Creation */
+"community.create.title" = "커뮤 만들기";
+"community.create.section.basic" = "기본 정보";
+"community.create.name" = "커뮤 이름";
+"community.create.name.placeholder" = "커뮤 이름을 입력하세요";
+"community.create.slug" = "커뮤 ID";
+"community.create.slug.placeholder" = "예: my-community";
+"community.create.slug.invalid" = "ID는 소문자, 숫자, 하이픈만 사용할 수 있습니다 (연속 하이픈 불가)";
+"community.create.section.profile" = "대표 프로필";
+"community.create.section.profile.footer" = "커뮤 소유자로 생성될 프로필입니다";
+"community.create.profile.name" = "프로필 이름";
+"community.create.profile.name.placeholder" = "표시할 이름";
+"community.create.profile.name.hint" = "커뮤 멤버들에게 보여질 이름입니다";
+"community.create.profile.username" = "프로필 ID";
+"community.create.profile.username.placeholder" = "username";
+"community.create.section.schedule" = "일정";
+"community.create.start_date" = "시작일시";
+"community.create.end_date" = "종료일시";
+"community.create.date.invalid" = "종료일은 시작일 이후여야 합니다";
+"community.create.section.recruiting" = "모집 설정";
+"community.create.recruiting" = "공개 모집";
+"community.create.recruiting.has_period" = "모집 기간 설정";
+"community.create.recruiting.start" = "모집 시작일시";
+"community.create.recruiting.end" = "모집 종료일시";
+"community.create.min_birth_year" = "최소 출생년도";
+"community.create.min_birth_year.placeholder" = "예: 2005";
+"community.create.min_birth_year.hint" = "해당 년도 이후 출생자만 가입 가능";
+"community.create.section.settings" = "설정";
+"community.create.mute_new_members" = "신규 멤버 음소거";
+"community.create.mute_new_members.hint" = "신규 멤버는 허용 전까지 공개 게시 불가";
+"community.create.creating" = "생성 중...";
+"community.create.submit" = "커뮤 만들기";
+"community.create.success.title" = "커뮤 생성 완료!";
+"community.create.success.message" = "커뮤가 성공적으로 생성되었습니다.";
+"community.create.section.image" = "배너 이미지";
+"community.create.image.select" = "이미지 선택";
+"community.create.image.change" = "이미지 변경";
+"community.create.image.remove" = "제거";
+"community.create.image.uploading" = "업로드 중...";
+
+/* Community Edit */
+"community.edit.title" = "커뮤 수정";
+"community.edit.save" = "변경사항 저장";
+"community.edit.saving" = "저장 중...";
+"community.edit.success.title" = "저장 완료!";
+"community.edit.success.message" = "커뮤가 성공적으로 수정되었습니다.";
+
+/* Community Delete */
+"community.delete.section" = "위험 구역";
+"community.delete.warning" = "커뮤를 삭제하면 되돌릴 수 없습니다. 모든 커뮤 데이터가 영구적으로 삭제됩니다.";
+"community.delete.button" = "커뮤 삭제";
+"community.delete.confirm.title" = "커뮤 삭제";
+"community.delete.confirm.message" = "확인을 위해 커뮤 ID를 입력하세요: %@";
+"community.delete.confirm.placeholder" = "커뮤 ID 입력";
+"community.delete.confirm.button" = "삭제";
+"community.delete.success.title" = "커뮤 삭제됨";
+"community.delete.success.message" = "커뮤가 영구적으로 삭제되었습니다.";

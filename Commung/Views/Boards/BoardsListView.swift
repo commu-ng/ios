@@ -28,7 +28,7 @@ struct BoardsListView: View {
                 LazyVStack(spacing: 0) {
                     let filteredBoards = boardsViewModel.boards
 
-                    if boardsViewModel.isLoadingBoards && filteredBoards.isEmpty {
+                    if boardsViewModel.isLoadingBoards && filteredBoards.isEmpty && !boardsViewModel.boardsListLoaded {
                         ProgressView(NSLocalizedString("loading.boards", comment: ""))
                             .frame(maxWidth: .infinity)
                             .padding(.top, 100)

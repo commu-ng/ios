@@ -5,28 +5,14 @@ struct MainTabView: View {
     @EnvironmentObject var communityContext: CommunityContext
     @EnvironmentObject var profileContext: ProfileContext
     @EnvironmentObject var appModeContext: AppModeContext
-    @StateObject private var boardsViewModel = BoardsViewModel()
+    @ObservedObject var boardsViewModel: BoardsViewModel
     @StateObject private var notificationViewModel = NotificationViewModel()
     @State private var notificationData: [AnyHashable: Any]?
-    @State private var isInitialLoadComplete = false
-
-    private var isInitialLoading: Bool {
-        authViewModel.isAuthenticated && !isInitialLoadComplete
-    }
 
     var body: some View {
         Group {
             if authViewModel.isAuthenticated {
-                if isInitialLoading {
-                    // Show single loading screen during initial setup
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text(NSLocalizedString("loading.app", comment: "Loading..."))
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if appModeContext.currentMode == .app {
+                if appModeContext.currentMode == .app {
                     appModeTabView
                         .id("app")
                         .transition(.opacity)
@@ -41,22 +27,9 @@ struct MainTabView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: appModeContext.currentMode)
         .task {
-            if authViewModel.isAuthenticated {
-                // Load communities first
-                await communityContext.loadCommunities()
-
-                // Load profiles for current community if one is selected
-                if let currentCommunityId = communityContext.currentCommunityId {
-                    await profileContext.loadProfiles(for: currentCommunityId)
-                }
-
-                // Load notification count
-                if let profileId = profileContext.currentProfileId {
-                    await notificationViewModel.loadUnreadCount(profileId: profileId)
-                }
-
-                // Mark initial load as complete
-                isInitialLoadComplete = true
+            // Load notification count if authenticated
+            if authViewModel.isAuthenticated, let profileId = profileContext.currentProfileId {
+                await notificationViewModel.loadUnreadCount(profileId: profileId)
             }
         }
         .onAppear {

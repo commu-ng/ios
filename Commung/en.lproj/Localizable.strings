@@ -396,3 +396,61 @@
 "applications.reject_title" = "Reject Application";
 "applications.reject_message" = "Optionally provide a reason for rejection.";
 "applications.rejection_reason_placeholder" = "Reason (optional)";
+
+/* Community Creation */
+"community.create.title" = "Create Community";
+"community.create.section.basic" = "Basic Info";
+"community.create.name" = "Community Name";
+"community.create.name.placeholder" = "Enter community name";
+"community.create.slug" = "Community ID";
+"community.create.slug.placeholder" = "e.g., my-community";
+"community.create.slug.invalid" = "ID must contain only lowercase letters, numbers, and hyphens (no consecutive hyphens)";
+"community.create.section.profile" = "Owner Profile";
+"community.create.section.profile.footer" = "This profile will be created as the community owner";
+"community.create.profile.name" = "Profile Name";
+"community.create.profile.name.placeholder" = "Your display name";
+"community.create.profile.name.hint" = "Display name visible to community members";
+"community.create.profile.username" = "Profile ID";
+"community.create.profile.username.placeholder" = "username";
+"community.create.section.schedule" = "Schedule";
+"community.create.start_date" = "Start Date";
+"community.create.end_date" = "End Date";
+"community.create.date.invalid" = "End date must be after start date";
+"community.create.section.recruiting" = "Recruitment";
+"community.create.recruiting" = "Public Recruiting";
+"community.create.recruiting.has_period" = "Set Recruiting Period";
+"community.create.recruiting.start" = "Recruiting Start";
+"community.create.recruiting.end" = "Recruiting End";
+"community.create.min_birth_year" = "Minimum Birth Year";
+"community.create.min_birth_year.placeholder" = "e.g., 2005";
+"community.create.min_birth_year.hint" = "Only users born in this year or later can join";
+"community.create.section.settings" = "Settings";
+"community.create.mute_new_members" = "Mute New Members";
+"community.create.mute_new_members.hint" = "New members cannot post publicly until allowed";
+"community.create.creating" = "Creating...";
+"community.create.submit" = "Create Community";
+"community.create.success.title" = "Community Created!";
+"community.create.success.message" = "Your community has been created successfully.";
+"community.create.section.image" = "Banner Image";
+"community.create.image.select" = "Select Image";
+"community.create.image.change" = "Change Image";
+"community.create.image.remove" = "Remove";
+"community.create.image.uploading" = "Uploading...";
+
+/* Community Edit */
+"community.edit.title" = "Edit Community";
+"community.edit.save" = "Save Changes";
+"community.edit.saving" = "Saving...";
+"community.edit.success.title" = "Changes Saved!";
+"community.edit.success.message" = "Your community has been updated successfully.";
+
+/* Community Delete */
+"community.delete.section" = "Danger Zone";
+"community.delete.warning" = "Deleting your community is permanent and cannot be undone. All community data will be lost.";
+"community.delete.button" = "Delete Community";
+"community.delete.confirm.title" = "Delete Community";
+"community.delete.confirm.message" = "To confirm, type the community ID: %@";
+"community.delete.confirm.placeholder" = "Enter community ID";
+"community.delete.confirm.button" = "Delete";
+"community.delete.success.title" = "Community Deleted";
+"community.delete.success.message" = "Your community has been permanently deleted.";

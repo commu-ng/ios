@@ -6,6 +6,9 @@ struct ConsoleCommunitiesView: View {
     @EnvironmentObject var profileContext: ProfileContext
     @EnvironmentObject var appModeContext: AppModeContext
 
+    @State private var showCreateCommunity = false
+    @State private var communityToEdit: Community?
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -32,7 +35,12 @@ struct ConsoleCommunitiesView: View {
                         } else {
                             LazyVStack(spacing: 12) {
                                 ForEach(communityContext.availableCommunities) { community in
-                                    ConsoleCommunityCard(community: community)
+                                    ConsoleCommunityCard(
+                                        community: community,
+                                        onEditTap: {
+                                            communityToEdit = community
+                                        }
+                                    )
                                     .onTapGesture {
                                         Task {
                                             await communityContext.switchCommunity(to: community)
@@ -51,8 +59,23 @@ struct ConsoleCommunitiesView: View {
             }
             .navigationTitle(NSLocalizedString("nav.communities", comment: ""))
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showCreateCommunity = true }) {
+                        Image(systemName: "plus.circle.fill")
+                    }
+                }
+            }
             .refreshable {
                 await communityContext.loadCommunities()
+            }
+            .sheet(isPresented: $showCreateCommunity) {
+                CommunityCreationView()
+                    .environmentObject(communityContext)
+            }
+            .sheet(item: $communityToEdit) { community in
+                CommunityEditView(community: community)
+                    .environmentObject(communityContext)
             }
         }
     }
@@ -60,6 +83,7 @@ struct ConsoleCommunitiesView: View {
 
 struct ConsoleCommunityCard: View {
     let community: Community
+    var onEditTap: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -92,15 +116,29 @@ struct ConsoleCommunityCard: View {
                     .font(.caption)
             }
 
-            // Pending applications badge
-            if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
-                Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.2))
-                    .foregroundColor(.orange)
-                    .cornerRadius(6)
+            // Actions row
+            HStack(spacing: 8) {
+                // Pending applications badge
+                if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
+                    Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundColor(.orange)
+                        .cornerRadius(6)
+                }
+
+                Spacer()
+
+                // Edit button
+                Button {
+                    onEditTap?()
+                } label: {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
             }
         }
         .padding()
@@ -116,3 +154,4 @@ struct ConsoleCommunityCard: View {
         .environmentObject(ProfileContext())
         .environmentObject(AppModeContext())
 }
+
