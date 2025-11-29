@@ -17,6 +17,7 @@ struct NotificationPostDestination: Hashable {
 
 struct BoardsListView: View {
     @EnvironmentObject var boardsViewModel: BoardsViewModel
+    @EnvironmentObject var authViewModel: AuthViewModel
     var notificationBoard: Board? = nil
     var notificationPostId: String? = nil
     @Binding var navigationTrigger: String?
@@ -40,7 +41,9 @@ struct BoardsListView: View {
                             .padding(.top, 100)
                     } else {
                         ForEach(filteredBoards) { board in
-                            NavigationLink(destination: BoardDetailView(board: board).environmentObject(boardsViewModel)) {
+                            NavigationLink(destination: BoardDetailView(board: board)
+                                .environmentObject(boardsViewModel)
+                                .environmentObject(authViewModel)) {
                                 BoardCardView(board: board)
                             }
                             .buttonStyle(.plain)
@@ -56,6 +59,7 @@ struct BoardsListView: View {
                     if let destination = notificationDestination {
                         PostDetailNavigationView(board: destination.board, postId: destination.postId)
                             .environmentObject(boardsViewModel)
+                            .environmentObject(authViewModel)
                     }
                 }
             }

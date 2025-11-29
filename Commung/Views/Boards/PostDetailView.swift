@@ -235,11 +235,14 @@ struct PostDetailView: View {
                 )
                 // Refresh the posts list to remove the deleted post
                 await boardsViewModel.loadPosts(boardSlug: board.slug, refresh: true)
-                // Navigate back after successful deletion
-                dismiss()
+                // Navigate back after successful deletion on main thread
+                await MainActor.run {
+                    dismiss()
+                }
             } catch {
-                // Handle error
-                isDeleting = false
+                await MainActor.run {
+                    isDeleting = false
+                }
             }
         }
     }

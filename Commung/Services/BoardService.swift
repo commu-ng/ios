@@ -140,7 +140,7 @@ class BoardService {
         boardSlug: String,
         postId: String
     ) async throws {
-        let _: MessageResponse = try await APIClient.shared.request(
+        let _: EmptyResponse = try await APIClient.shared.request(
             endpoint: "/console/board/\(boardSlug)/posts/\(postId)",
             method: "DELETE",
             requiresAuth: true
