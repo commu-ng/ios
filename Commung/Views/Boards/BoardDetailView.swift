@@ -125,10 +125,18 @@ struct BoardDetailView: View {
                                 .listRowInsets(EdgeInsets())
                             } else {
                                 ForEach(boardsViewModel.posts) { post in
-                                    NavigationLink(destination: PostDetailView(post: post, board: board).environmentObject(boardsViewModel)) {
-                                        PostRowView(post: post)
+                                    ZStack {
+                                        NavigationLink(destination: PostDetailView(post: post, board: board).environmentObject(boardsViewModel)) {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
+
+                                        BoardPostCardView(post: post)
                                             .environmentObject(boardsViewModel)
                                     }
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                    .listRowBackground(Color.clear)
                                     .onAppear {
                                         if post.id == boardsViewModel.posts.last?.id {
                                             Task {
@@ -177,7 +185,7 @@ struct BoardDetailView: View {
     }
 }
 
-struct PostRowView: View {
+struct BoardPostCardView: View {
     let post: Post
     @EnvironmentObject var boardsViewModel: BoardsViewModel
 
@@ -236,29 +244,32 @@ struct PostRowView: View {
                 .lineLimit(1)
                 .frame(height: 22, alignment: .topLeading)
 
-            FlowLayout(spacing: 6) {
-                ForEach(post.hashtags) { hashtag in
-                    let isSelected = boardsViewModel.selectedHashtags.contains(hashtag.tag)
-                    Text("#\(hashtag.tag)")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(isSelected ? Color.blue.opacity(0.2) : Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(4)
-                        .onTapGesture {
-                            var newHashtags = boardsViewModel.selectedHashtags
-                            if isSelected {
-                                newHashtags.removeAll { $0 == hashtag.tag }
-                            } else {
-                                newHashtags.append(hashtag.tag)
+            if !post.hashtags.isEmpty {
+                FlowLayout(spacing: 6) {
+                    ForEach(post.hashtags) { hashtag in
+                        let isSelected = boardsViewModel.selectedHashtags.contains(hashtag.tag)
+                        Text("#\(hashtag.tag)")
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isSelected ? Color.blue.opacity(0.2) : Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .cornerRadius(4)
+                            .onTapGesture {
+                                var newHashtags = boardsViewModel.selectedHashtags
+                                if isSelected {
+                                    newHashtags.removeAll { $0 == hashtag.tag }
+                                } else {
+                                    newHashtags.append(hashtag.tag)
+                                }
+                                boardsViewModel.setHashtags(newHashtags)
                             }
-                            boardsViewModel.setHashtags(newHashtags)
-                        }
+                    }
                 }
             }
-            .frame(minHeight: 28, alignment: .topLeading)
         }
-        .padding(.vertical, 8)
+        .padding(12)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
 }
