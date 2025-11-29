@@ -4,6 +4,7 @@ import Combine
 struct MessagesView: View {
     @EnvironmentObject var communityContext: CommunityContext
     @EnvironmentObject var profileContext: ProfileContext
+    @EnvironmentObject var appModeContext: AppModeContext
 
     var body: some View {
         NavigationView {
@@ -26,6 +27,17 @@ struct MessagesView: View {
             }
             .navigationTitle(NSLocalizedString("messages.title", comment: ""))
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        withAnimation {
+                            appModeContext.currentMode = .console
+                        }
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                    }
+                }
+            }
         }
     }
 }
@@ -589,4 +601,5 @@ class NewMessageViewModel: ObservableObject {
     MessagesView()
         .environmentObject(CommunityContext())
         .environmentObject(ProfileContext())
+        .environmentObject(AppModeContext())
 }

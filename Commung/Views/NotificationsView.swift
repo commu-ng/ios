@@ -3,6 +3,7 @@ import SwiftUI
 struct NotificationsView: View {
     @EnvironmentObject var viewModel: NotificationViewModel
     @EnvironmentObject var profileContext: ProfileContext
+    @EnvironmentObject var appModeContext: AppModeContext
 
     var body: some View {
         NavigationView {
@@ -101,6 +102,15 @@ struct NotificationsView: View {
             }
             .navigationTitle(NSLocalizedString("nav.notifications", comment: ""))
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        withAnimation {
+                            appModeContext.currentMode = .console
+                        }
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                    }
+                }
                 if !viewModel.notifications.isEmpty {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {

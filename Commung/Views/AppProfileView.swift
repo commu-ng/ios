@@ -3,6 +3,7 @@ import SwiftUI
 struct AppProfileView: View {
     @EnvironmentObject var communityContext: CommunityContext
     @EnvironmentObject var profileContext: ProfileContext
+    @EnvironmentObject var appModeContext: AppModeContext
 
     var body: some View {
         NavigationView {
@@ -26,6 +27,15 @@ struct AppProfileView: View {
             .navigationTitle(NSLocalizedString("profile.title", comment: ""))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        withAnimation {
+                            appModeContext.currentMode = .console
+                        }
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     ProfileSwitcher()
                 }
@@ -215,4 +225,5 @@ struct AppProfileContent: View {
     AppProfileView()
         .environmentObject(CommunityContext())
         .environmentObject(ProfileContext())
+        .environmentObject(AppModeContext())
 }
