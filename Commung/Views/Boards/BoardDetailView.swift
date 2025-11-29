@@ -169,11 +169,7 @@ struct BoardDetailView: View {
                 .environmentObject(boardsViewModel)
         }
         .task {
-            // Only select the board if it's not already selected and not currently loading
-            // This prevents race conditions with PromoView.task
-            if boardsViewModel.selectedBoard?.id != board.id && !boardsViewModel.isLoadingBoardContent {
-                boardsViewModel.selectBoard(board)
-            }
+            boardsViewModel.selectBoard(board)
         }
         .refreshable {
             await boardsViewModel.loadPosts(boardSlug: board.slug, refresh: true)
