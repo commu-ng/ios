@@ -218,83 +218,101 @@ struct MyCommunityRow: View {
     var onEditTapped: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                // Community Icon (first letter)
+        VStack(alignment: .leading, spacing: 0) {
+            // Banner Image
+            if let bannerURL = community.bannerURL {
+                KFImage(bannerURL)
+                    .placeholder {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(height: 120)
+                            .overlay(ProgressView())
+                    }
+                    .fade(duration: 0.2)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 120)
+                    .clipped()
+            } else {
                 ZStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 50, height: 50)
+                    Rectangle()
+                        .fill(Color(.systemGray5))
+                        .frame(height: 120)
 
                     Text(String(community.name.prefix(1)).uppercased())
-                        .font(.title2)
+                        .font(.system(size: 48))
                         .fontWeight(.bold)
-                        .foregroundColor(.blue)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(community.name)
-                        .font(.headline)
-
-                    Text(community.slug)
-                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
-
-                Spacer()
-
-                // Role badge
-                if let role = community.role {
-                    Text(role.capitalized)
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(roleBadgeColor(for: role))
-                        .cornerRadius(4)
-                }
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
             }
 
-            // Actions row
-            HStack(spacing: 8) {
-                // Pending applications badge
-                if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
-                    Button(action: {
-                        onApplicationsTapped?()
-                    }) {
-                        Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(community.name)
+                            .font(.headline)
+
+                        Text(community.slug)
                             .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    // Role badge
+                    if let role = community.role {
+                        Text(role.capitalized)
+                            .font(.caption)
+                            .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.orange.opacity(0.2))
-                            .foregroundColor(.orange)
-                            .cornerRadius(6)
+                            .background(roleBadgeColor(for: role))
+                            .cornerRadius(4)
                     }
-                    .buttonStyle(.plain)
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
                 }
 
-                Spacer()
-
-                // Edit button (only for owner)
-                if community.role == "owner" {
-                    Button(action: {
-                        onEditTapped?()
-                    }) {
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.title3)
-                            .foregroundColor(.blue)
+                // Actions row
+                HStack(spacing: 8) {
+                    // Pending applications badge
+                    if let pendingCount = community.pendingApplicationCount, pendingCount > 0 {
+                        Button(action: {
+                            onApplicationsTapped?()
+                        }) {
+                            Label(String(format: NSLocalizedString("communities.pending", comment: ""), pendingCount), systemImage: "person.badge.clock")
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.orange.opacity(0.2))
+                                .foregroundColor(.orange)
+                                .cornerRadius(6)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+
+                    Spacer()
+
+                    // Edit button (only for owner)
+                    if community.role == "owner" {
+                        Button(action: {
+                            onEditTapped?()
+                        }) {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
+            .padding(12)
         }
-        .padding()
-        .background(Color(.systemGray6))
+        .background(Color(.systemBackground))
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 
     private func roleBadgeColor(for role: String) -> Color {
