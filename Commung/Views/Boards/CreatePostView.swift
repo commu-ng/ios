@@ -164,13 +164,10 @@ struct CreatePostView: View {
                 guard isPromoBoard else { return }
 
                 let communityTypeLabels = Set(Constants.COMMUNITY_TYPE_LABELS.values)
-                let currentHashtags = hashtags
-                    .split(separator: ",")
-                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                    .filter { !$0.isEmpty }
+                let currentHashtags = parseHashtags(hashtags)
 
                 // Remove any existing community type hashtags
-                let filtered = currentHashtags.filter { !communityTypeLabels.contains(String($0)) }
+                let filtered = currentHashtags.filter { !communityTypeLabels.contains($0) }
 
                 // Add the selected community type if one is selected
                 let updated: [String]
@@ -238,10 +235,7 @@ struct CreatePostView: View {
         isCreating = true
         errorMessage = nil
 
-        let hashtagList = hashtags
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        let hashtagList = parseHashtags(hashtags)
 
         Task {
             await viewModel.createPost(
