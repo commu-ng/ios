@@ -118,3 +118,7 @@ struct ImageUploadResponse: Codable {
     let height: Int
     let filename: String
 }
+
+struct ImageUploadResponseWrapper: Codable {
+    let data: ImageUploadResponse
+}

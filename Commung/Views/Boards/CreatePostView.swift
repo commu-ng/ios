@@ -192,21 +192,38 @@ struct CreatePostView: View {
         !title.isEmpty && !content.isEmpty && !isCreating && !isUploading
     }
 
+    private func parseHashtags(_ input: String) -> [String] {
+        // Split by comma, space, or combination of both
+        // Also handle # prefix
+        return input
+            .replacingOccurrences(of: ",", with: " ")
+            .split(separator: " ")
+            .map { tag in
+                var cleaned = String(tag).trimmingCharacters(in: .whitespaces)
+                // Remove # prefix if present
+                while cleaned.hasPrefix("#") {
+                    cleaned = String(cleaned.dropFirst())
+                }
+                return cleaned
+            }
+            .filter { !$0.isEmpty }
+    }
+
     private func uploadSelectedImage(_ item: PhotosPickerItem) async {
         isUploading = true
         errorMessage = nil
 
         do {
-            guard let data = try await item.loadTransferable(type: Data.self) else {
+            guard let image = try await item.loadTransferable(type: PhotosPickerImage.self) else {
                 errorMessage = NSLocalizedString("image.load_error", comment: "")
                 isUploading = false
                 return
             }
 
-            imageData = data
+            self.imageData = image.data
 
-            let fileName = "image_\(UUID().uuidString).jpg"
-            let response = try await viewModel.uploadImage(imageData: data, fileName: fileName)
+            let fileName = "image_\(UUID().uuidString).\(image.fileExtension)"
+            let response = try await viewModel.uploadImage(imageData: image.data, fileName: fileName)
             uploadedImage = response
         } catch {
             errorMessage = error.localizedDescription

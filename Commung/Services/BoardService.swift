@@ -171,12 +171,28 @@ class BoardService {
 
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
+        // Detect content type from file extension
+        let fileExtension = (fileName as NSString).pathExtension.lowercased()
+        let contentType: String
+        switch fileExtension {
+        case "png":
+            contentType = "image/png"
+        case "gif":
+            contentType = "image/gif"
+        case "webp":
+            contentType = "image/webp"
+        case "heic", "heif":
+            contentType = "image/heic"
+        default:
+            contentType = "image/jpeg"
+        }
+
         var body = Data()
 
         // Add file part
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(contentType)\r\n\r\n".data(using: .utf8)!)
         body.append(imageData)
         body.append("\r\n".data(using: .utf8)!)
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
@@ -195,7 +211,8 @@ class BoardService {
 
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(ImageUploadResponse.self, from: data)
+        let wrapper = try decoder.decode(ImageUploadResponseWrapper.self, from: data)
+        return wrapper.data
     }
 
     func createPost(
