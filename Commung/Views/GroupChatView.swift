@@ -8,6 +8,7 @@ struct GroupChatView: View {
     @StateObject private var viewModel = GroupChatViewModel()
     @State private var messageText = ""
     @State private var showMembersSheet = false
+    @State private var isAtBottom = true
     @FocusState private var isMessageFieldFocused: Bool
 
     var body: some View {
@@ -53,11 +54,19 @@ struct GroupChatView: View {
                     .padding()
                 }
                 .onChange(of: viewModel.messages.count) { oldValue, newValue in
-                    if let lastMessage = viewModel.messages.last {
+                    // Scroll to bottom when new messages are added (only if user is at bottom)
+                    if newValue > oldValue && isAtBottom,
+                       let lastMessage = viewModel.messages.last {
                         withAnimation {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
                     }
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    let atBottom = geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 50
+                    return atBottom
+                } action: { _, newValue in
+                    isAtBottom = newValue
                 }
             }
 
@@ -447,7 +456,7 @@ class GroupChatViewModel: ObservableObject {
 
         pollingTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
 
                 guard !Task.isCancelled else { break }
 
@@ -458,8 +467,12 @@ class GroupChatViewModel: ObservableObject {
                         limit: 50,
                         cursor: nil
                     )
-                    await MainActor.run {
-                        self.messages = response.data
+                    let newMessages = response.data
+                    if newMessages.count != messages.count ||
+                       (newMessages.last?.id != messages.last?.id) {
+                        await MainActor.run {
+                            self.messages = newMessages
+                        }
                     }
                 } catch {
                     print("Polling failed: \(error)")

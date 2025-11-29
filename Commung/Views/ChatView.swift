@@ -7,6 +7,7 @@ struct ChatView: View {
     @EnvironmentObject var profileContext: ProfileContext
     @StateObject private var viewModel = ChatViewModel()
     @State private var messageText = ""
+    @State private var isAtBottom = true
     @FocusState private var isMessageFieldFocused: Bool
 
     private var canSend: Bool {
@@ -58,8 +59,8 @@ struct ChatView: View {
                 .defaultScrollAnchor(.bottom)
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: viewModel.messages.count) { oldValue, newValue in
-                    // Scroll to bottom when new messages are added
-                    if newValue > oldValue,
+                    // Scroll to bottom when new messages are added (only if user is at bottom)
+                    if newValue > oldValue && isAtBottom,
                        let lastMessage = viewModel.messages.last {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             withAnimation {
@@ -67,6 +68,12 @@ struct ChatView: View {
                             }
                         }
                     }
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    let atBottom = geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 50
+                    return atBottom
+                } action: { _, newValue in
+                    isAtBottom = newValue
                 }
             }
 
@@ -107,6 +114,11 @@ struct ChatView: View {
         .onAppear {
             // Auto-focus message field
             isMessageFieldFocused = true
+            // Start polling
+            viewModel.startPolling(otherProfileId: otherProfileId, profileId: profileContext.currentProfileId)
+        }
+        .onDisappear {
+            viewModel.stopPolling()
         }
     }
 
@@ -260,6 +272,7 @@ class ChatViewModel: ObservableObject {
     private var nextCursor: String?
     private var currentProfileId: String?
     private var otherProfileId: String?
+    private var pollingTask: Task<Void, Never>?
 
     func loadMessages(otherProfileId: String, currentProfileId: String) async {
         guard !isLoading else { return }
@@ -383,6 +396,41 @@ class ChatViewModel: ObservableObject {
         } catch {
             print("Failed to remove reaction: \(error)")
         }
+    }
+
+    func startPolling(otherProfileId: String, profileId: String?) {
+        guard let profileId = profileId else { return }
+
+        pollingTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+
+                guard !Task.isCancelled else { break }
+
+                do {
+                    let thread = try await MessageService.shared.getConversationThread(
+                        otherProfileId: otherProfileId,
+                        profileId: profileId,
+                        limit: 50,
+                        cursor: nil
+                    )
+                    let newMessages = thread.data
+                    if newMessages.count != messages.count ||
+                       (newMessages.last?.id != messages.last?.id) {
+                        await MainActor.run {
+                            self.messages = newMessages
+                        }
+                    }
+                } catch {
+                    print("Polling failed: \(error)")
+                }
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTask?.cancel()
+        pollingTask = nil
     }
 }
 
