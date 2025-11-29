@@ -38,19 +38,14 @@ class ProfileContext: ObservableObject {
             let profiles = try await ProfileService.shared.getUserProfiles()
             availableProfiles = profiles
 
-            // Try to restore saved profile for this community
+            // Restore saved profile for this community, or select primary (default) profile
             let savedProfileId = UserDefaults.standard.string(forKey: userDefaultsKey(for: communityId))
+            let savedProfile = savedProfileId.flatMap { id in profiles.first { $0.id == id } }
+            let primaryProfile = profiles.first { $0.isPrimary }
+            let profile = savedProfile ?? primaryProfile ?? profiles.first
 
-            if let savedId = savedProfileId,
-               let profile = profiles.first(where: { $0.id == savedId }) {
-                currentProfile = profile
-                currentProfileId = profile.id
-            } else if let primaryProfile = profiles.first(where: { $0.isPrimary }) {
-                // Select primary profile
-                await switchProfile(to: primaryProfile)
-            } else if let firstProfile = profiles.first {
-                // Select first available profile
-                await switchProfile(to: firstProfile)
+            if let profile = profile {
+                await switchProfile(to: profile)
             }
         } catch {
             errorMessage = error.localizedDescription
