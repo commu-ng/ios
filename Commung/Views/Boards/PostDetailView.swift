@@ -72,20 +72,8 @@ struct PostDetailView: View {
 
                     // Post content (Markdown rendered)
                     if let content = post.content {
-                        if let attributedString = try? AttributedString(
-                            markdown: content,
-                            options: AttributedString.MarkdownParsingOptions(
-                                interpretedSyntax: .inlineOnlyPreservingWhitespace
-                            )
-                        ) {
-                            Text(attributedString)
-                                .font(.body)
-                                .padding(.horizontal)
-                        } else {
-                            Text(content)
-                                .font(.body)
-                                .padding(.horizontal)
-                        }
+                        MarkdownTextView(content: content)
+                            .padding(.horizontal)
                     }
 
                     // Hashtags
