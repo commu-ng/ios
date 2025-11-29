@@ -41,15 +41,11 @@ struct BoardsListView: View {
                     } else {
                         ForEach(filteredBoards) { board in
                             NavigationLink(destination: BoardDetailView(board: board).environmentObject(boardsViewModel)) {
-                                BoardRowView(board: board)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                BoardCardView(board: board)
                             }
                             .buttonStyle(.plain)
                             .padding(.horizontal)
-                            .padding(.vertical, 8)
-
-                            Divider()
-                                .padding(.leading)
+                            .padding(.vertical, 4)
                         }
                     }
                 }
@@ -97,7 +93,7 @@ extension BoardsListView {
     }
 }
 
-struct BoardRowView: View {
+struct BoardCardView: View {
     let board: Board
 
     var body: some View {
@@ -112,6 +108,9 @@ struct BoardRowView: View {
                     .lineLimit(2)
             }
         }
-        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
 }
