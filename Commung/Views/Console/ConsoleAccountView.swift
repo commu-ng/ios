@@ -9,6 +9,7 @@ struct ConsoleAccountView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingChangePassword = false
     @State private var showingEmailChange = false
+    @State private var showingBlockedUsers = false
 
     var body: some View {
         NavigationView {
@@ -57,6 +58,15 @@ struct ConsoleAccountView: View {
                         } label: {
                             Label(NSLocalizedString("account.change_email", comment: ""), systemImage: "envelope.fill")
                         }
+                    }
+                }
+
+                // Blocked Users Section
+                Section(header: Text(NSLocalizedString("block.section", comment: ""))) {
+                    Button {
+                        showingBlockedUsers = true
+                    } label: {
+                        Label(NSLocalizedString("block.manage", comment: ""), systemImage: "person.slash")
                     }
                 }
 
@@ -121,6 +131,9 @@ struct ConsoleAccountView: View {
             .sheet(isPresented: $showingEmailChange) {
                 ChangeEmailView(currentEmail: viewModel.currentUser?.email)
             }
+            .sheet(isPresented: $showingBlockedUsers) {
+                BlockedUsersView()
+            }
         }
         .task {
             await viewModel.loadCurrentUser()
@@ -155,6 +168,224 @@ class ConsoleAccountViewModel: ObservableObject {
             try await AccountService.shared.deleteAccount()
         } catch {
             errorMessage = "Failed to delete account: \(error.localizedDescription)"
+        }
+    }
+}
+
+struct ChangePasswordView: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = ChangePasswordViewModel()
+
+    @State private var currentPassword = ""
+    @State private var newPassword = ""
+    @State private var confirmPassword = ""
+
+    var canSave: Bool {
+        !currentPassword.isEmpty &&
+        !newPassword.isEmpty &&
+        newPassword.count >= 8 &&
+        newPassword == confirmPassword &&
+        !viewModel.isSaving
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text(NSLocalizedString("account.current_password", comment: ""))) {
+                    SecureField(NSLocalizedString("account.current_password", comment: ""), text: $currentPassword)
+                        .textContentType(.password)
+                        .autocapitalization(.none)
+                }
+
+                Section(header: Text(NSLocalizedString("account.new_password", comment: ""))) {
+                    SecureField(NSLocalizedString("account.new_password", comment: ""), text: $newPassword)
+                        .textContentType(.newPassword)
+                        .autocapitalization(.none)
+
+                    SecureField(NSLocalizedString("account.confirm_password", comment: ""), text: $confirmPassword)
+                        .textContentType(.newPassword)
+                        .autocapitalization(.none)
+
+                    if !newPassword.isEmpty && newPassword.count < 8 {
+                        Text(NSLocalizedString("account.password_hint", comment: ""))
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+
+                    if !newPassword.isEmpty && !confirmPassword.isEmpty && newPassword != confirmPassword {
+                        Text(NSLocalizedString("account.passwords_mismatch", comment: ""))
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle(NSLocalizedString("account.change_password", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(NSLocalizedString("action.cancel", comment: "")) {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            let success = await viewModel.changePassword(
+                                current: currentPassword,
+                                new: newPassword
+                            )
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        if viewModel.isSaving {
+                            ProgressView()
+                        } else {
+                            Text(NSLocalizedString("action.save", comment: ""))
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .disabled(!canSave)
+                }
+            }
+        }
+    }
+}
+
+struct ChangeEmailView: View {
+    let currentEmail: String?
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = ChangeEmailViewModel()
+
+    @State private var newEmail = ""
+
+    var canSave: Bool {
+        !newEmail.isEmpty &&
+        newEmail.contains("@") &&
+        newEmail != currentEmail &&
+        !viewModel.isSaving
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text(NSLocalizedString("account.email", comment: ""))) {
+                    if let current = currentEmail {
+                        LabeledContent(NSLocalizedString("account.current_email", comment: ""), value: current)
+                    }
+
+                    TextField(NSLocalizedString("account.new_email", comment: ""), text: $newEmail)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled()
+                }
+
+                Section {
+                    Text(NSLocalizedString("account.verification_hint", comment: ""))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+
+                if let success = viewModel.successMessage {
+                    Section {
+                        Text(success)
+                            .foregroundColor(.green)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle(NSLocalizedString("account.change_email", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(NSLocalizedString("action.cancel", comment: "")) {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            let success = await viewModel.changeEmail(newEmail: newEmail)
+                            if success {
+                                // Don't dismiss - show success message
+                            }
+                        }
+                    } label: {
+                        if viewModel.isSaving {
+                            ProgressView()
+                        } else {
+                            Text(NSLocalizedString("account.send_verification", comment: ""))
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .disabled(!canSave)
+                }
+            }
+        }
+    }
+}
+
+@MainActor
+class ChangePasswordViewModel: ObservableObject {
+    @Published var isSaving = false
+    @Published var errorMessage: String?
+
+    func changePassword(current: String, new: String) async -> Bool {
+        isSaving = true
+        errorMessage = nil
+
+        do {
+            try await AccountService.shared.changePassword(currentPassword: current, newPassword: new)
+            isSaving = false
+            return true
+        } catch {
+            errorMessage = "Failed to change password: \(error.localizedDescription)"
+            isSaving = false
+            return false
+        }
+    }
+}
+
+@MainActor
+class ChangeEmailViewModel: ObservableObject {
+    @Published var isSaving = false
+    @Published var errorMessage: String?
+    @Published var successMessage: String?
+
+    func changeEmail(newEmail: String) async -> Bool {
+        isSaving = true
+        errorMessage = nil
+        successMessage = nil
+
+        do {
+            try await AccountService.shared.changeEmail(newEmail: newEmail)
+            successMessage = NSLocalizedString("account.verification_sent", comment: "")
+            isSaving = false
+            return true
+        } catch {
+            errorMessage = "Failed to change email: \(error.localizedDescription)"
+            isSaving = false
+            return false
         }
     }
 }

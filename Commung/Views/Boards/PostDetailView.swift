@@ -12,6 +12,8 @@ struct PostDetailView: View {
     @State private var showReportSheet = false
     @State private var reportReason = ""
     @State private var isReporting = false
+    @State private var showBlockConfirmation = false
+    @State private var isBlocking = false
 
     private var isAuthor: Bool {
         authViewModel.currentUser?.id == post.author.id
@@ -129,10 +131,19 @@ struct PostDetailView: View {
         }
         if !isAuthor && isLoggedIn {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showReportSheet = true
+                Menu {
+                    Button {
+                        showReportSheet = true
+                    } label: {
+                        Label(NSLocalizedString("action.report", comment: ""), systemImage: "flag")
+                    }
+                    Button(role: .destructive) {
+                        showBlockConfirmation = true
+                    } label: {
+                        Label(NSLocalizedString("block.user", comment: ""), systemImage: "person.slash")
+                    }
                 } label: {
-                    Image(systemName: "flag")
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -193,6 +204,16 @@ struct PostDetailView: View {
         }
         .presentationDetents([.medium])
     }
+    .alert(NSLocalizedString("block.confirm_title", comment: ""), isPresented: $showBlockConfirmation) {
+        Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) { }
+        Button(NSLocalizedString("block.user", comment: ""), role: .destructive) {
+            Task {
+                await blockUser()
+            }
+        }
+    } message: {
+        Text(NSLocalizedString("block.confirm_message", comment: ""))
+    }
     }
 
     private func submitReport() async {
@@ -233,5 +254,23 @@ struct PostDetailView: View {
                 }
             }
         }
+    }
+
+    private func blockUser() async {
+        isBlocking = true
+
+        do {
+            try await BlockService.shared.blockUser(userId: post.author.id)
+            // Refresh the posts list to hide blocked user's posts
+            await boardsViewModel.loadPosts(boardSlug: board.slug, refresh: true)
+            // Navigate back after blocking
+            await MainActor.run {
+                dismiss()
+            }
+        } catch {
+            print("Failed to block user: \(error)")
+        }
+
+        isBlocking = false
     }
 }

@@ -454,3 +454,17 @@
 "community.delete.confirm.button" = "Delete";
 "community.delete.success.title" = "Community Deleted";
 "community.delete.success.message" = "Your community has been permanently deleted.";
+
+/* Blocked Users */
+"block.title" = "Blocked Users";
+"block.section" = "Blocked";
+"block.manage" = "Manage Blocked Users";
+"block.empty" = "No blocked users";
+"block.empty_description" = "You can block users from their profile";
+"block.unblock" = "Unblock";
+"block.blocked_at" = "Blocked on %@";
+"block.user" = "Block User";
+"block.confirm_title" = "Block User";
+"block.confirm_message" = "Are you sure you want to block this user? Their posts will no longer appear.";
+"block.success" = "User blocked";
+"error.title" = "Error";

@@ -138,6 +138,8 @@ struct ReplyRowView: View {
     @ObservedObject var viewModel: BoardsViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showDeleteConfirmation = false
+    @State private var showBlockConfirmation = false
+    @State private var isBlocking = false
 
     // Visual depth is capped at 5
     private var visualDepth: Int {
@@ -150,6 +152,10 @@ struct ReplyRowView: View {
 
     private var isAuthor: Bool {
         authViewModel.currentUser?.id == reply.author.id
+    }
+
+    private var isLoggedIn: Bool {
+        authViewModel.currentUser != nil
     }
 
     var body: some View {
@@ -208,6 +214,21 @@ struct ReplyRowView: View {
                                 .foregroundColor(.red)
                             }
                         }
+
+                        // Block button (only for non-authors when logged in)
+                        if !isAuthor && isLoggedIn {
+                            Button(role: .destructive, action: {
+                                showBlockConfirmation = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "person.slash")
+                                        .font(.caption2)
+                                    Text(NSLocalizedString("block.user", comment: ""))
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.red)
+                            }
+                        }
                     }
                     .padding(.top, 2)
                 }
@@ -236,6 +257,16 @@ struct ReplyRowView: View {
         } message: {
             Text(NSLocalizedString("comment.delete_confirm_message", comment: ""))
         }
+        .alert(NSLocalizedString("block.confirm_title", comment: ""), isPresented: $showBlockConfirmation) {
+            Button(NSLocalizedString("action.cancel", comment: ""), role: .cancel) { }
+            Button(NSLocalizedString("block.user", comment: ""), role: .destructive) {
+                Task {
+                    await blockUser()
+                }
+            }
+        } message: {
+            Text(NSLocalizedString("block.confirm_message", comment: ""))
+        }
     }
 
     private func deleteReply() {
@@ -246,6 +277,21 @@ struct ReplyRowView: View {
                 replyId: reply.id
             )
         }
+    }
+
+    private func blockUser() async {
+        isBlocking = true
+
+        do {
+            try await BlockService.shared.blockUser(userId: reply.author.id)
+            // Refresh the posts list to hide blocked user's posts and replies
+            await viewModel.loadPosts(boardSlug: boardSlug, refresh: true)
+            await viewModel.loadReplies(boardSlug: boardSlug, postId: postId, refresh: true)
+        } catch {
+            print("Failed to block user: \(error)")
+        }
+
+        isBlocking = false
     }
 
     private func formatDate(_ dateString: String) -> String {
