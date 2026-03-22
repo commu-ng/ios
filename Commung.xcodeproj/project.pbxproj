@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		AF4A92E320634EE3BF2CA244 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = F1405EFBD09B41F0BD04CAAD /* Sentry */; };
-		C7E0E6C02EC9B66200C566E7 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = C7E0E6BF2EC9B66200C566E7 /* Kingfisher */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,7 +27,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C7E0E6C02EC9B66200C566E7 /* Kingfisher in Frameworks */,
 				AF4A92E320634EE3BF2CA244 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -73,7 +71,6 @@
 			);
 			name = Commung;
 			packageProductDependencies = (
-				C7E0E6BF2EC9B66200C566E7 /* Kingfisher */,
 				F1405EFBD09B41F0BD04CAAD /* Sentry */,
 			);
 			productName = Commung;
@@ -106,7 +103,6 @@
 			mainGroup = C72214A12EC9AFFB0084BF04;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				C7E0E6BE2EC9B66200C566E7 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				73AC84E9D88041B58407EBDD /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -408,23 +404,10 @@
 				minimumVersion = 8.0.0;
 			};
 		};
-		C7E0E6BE2EC9B66200C566E7 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/onevcat/Kingfisher";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 8.6.1;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
+	/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C7E0E6BF2EC9B66200C566E7 /* Kingfisher */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C7E0E6BE2EC9B66200C566E7 /* XCRemoteSwiftPackageReference "Kingfisher" */;
-			productName = Kingfisher;
-		};
-		F1405EFBD09B41F0BD04CAAD /* Sentry */ = {
+			F1405EFBD09B41F0BD04CAAD /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 73AC84E9D88041B58407EBDD /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = Sentry;
