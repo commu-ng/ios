@@ -298,7 +298,22 @@ struct MultiWebView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     self.manager.currentURL = wv.url?.absoluteString ?? ""
                 }
+                // Retry communities fetch on console URL changes (e.g. after login)
+                if tabId == "console" && !self.manager.communitiesFetched {
+                    DispatchQueue.main.async {
+                        self.fetchCommunities(from: wv)
+                    }
+                }
             }
+        }
+
+        private func fetchCommunities(from webView: WKWebView) {
+            webView.evaluateJavaScript("""
+                fetch('https://api.commu.ng/console/communities/mine', { credentials: 'include' })
+                    .then(r => { if (r.ok) return r.json(); throw new Error(); })
+                    .then(data => window.webkit.messageHandlers.communities.postMessage(JSON.stringify(data)))
+                    .catch(() => {});
+            """)
         }
 
         @objc func handleRefresh(_ sender: UIRefreshControl) {
@@ -347,15 +362,6 @@ struct MultiWebView: UIViewRepresentable {
             }
             if let token = UserDefaults.standard.string(forKey: "pushToken") {
                 webView.evaluateJavaScript("window.commungNative = { pushToken: '\(token)', platform: 'ios' };")
-            }
-
-            if !manager.communitiesFetched, manager.webViews["console"] === webView {
-                webView.evaluateJavaScript("""
-                    fetch('https://api.commu.ng/console/communities/mine', { credentials: 'include' })
-                        .then(r => { if (r.ok) return r.json(); throw new Error(); })
-                        .then(data => window.webkit.messageHandlers.communities.postMessage(JSON.stringify(data)))
-                        .catch(() => {});
-                """)
             }
         }
 
