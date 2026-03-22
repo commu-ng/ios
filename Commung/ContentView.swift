@@ -24,15 +24,6 @@ struct ContentView: View {
             manager: manager,
             tabs: tabs,
             selectedTabId: selectedTabId,
-            onCommunitiesLoaded: { communities in
-                var newTabs = [tabs[0]]
-                for (slug, name) in communities {
-                    let communityUrl = "https://\(slug).commu.ng"
-                    let ssoUrl = "https://api.commu.ng/auth/sso?return_to=\(communityUrl)/"
-                    newTabs.append(Tab(id: slug, name: name, url: ssoUrl))
-                }
-                tabs = newTabs
-            },
             onCrossTabNavigation: { urlString in
                 let tabId = findTabId(for: urlString)
                 selectedTabId = tabId
@@ -65,6 +56,58 @@ struct ContentView: View {
             let js = "window.commungNative = { pushToken: '\(token)', platform: 'ios' };"
             for wv in manager.webViews.values {
                 wv.evaluateJavaScript(js)
+            }
+        }
+        .task {
+            // Poll for login state by checking cookies — avoids evaluateJavaScript during navigation
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(3))
+                if !manager.communitiesFetched {
+                    await fetchCommunitiesNatively()
+                }
+            }
+        }
+    }
+
+    private func fetchCommunitiesNatively() async {
+        // Read session cookie from WKWebsiteDataStore
+        let cookies = await WKWebsiteDataStore.default().httpCookieStore.allCookies()
+        guard let sessionCookie = cookies.first(where: { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }) else {
+            return
+        }
+
+        // Make native HTTP request with the cookie
+        var request = URLRequest(url: URL(string: "https://api.commu.ng/console/communities/mine")!)
+        request.setValue("session_token=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
+        request.timeoutInterval = 10
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: [[String: Any]]],
+              let communities = json["data"] else {
+            return
+        }
+
+        let result = communities.compactMap { c -> (slug: String, name: String)? in
+            guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
+            return (slug, name)
+        }
+
+        manager.communitiesFetched = true
+        var newTabs = [tabs[0]]
+        for (slug, name) in result {
+            let communityUrl = "https://\(slug).commu.ng"
+            let ssoUrl = "https://api.commu.ng/auth/sso?return_to=\(communityUrl)/"
+            newTabs.append(Tab(id: slug, name: name, url: ssoUrl))
+        }
+        tabs = newTabs
+
+        // Request push notification permission
+        let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+        if granted == true {
+            await MainActor.run {
+                UIApplication.shared.registerForRemoteNotifications()
             }
         }
     }
@@ -200,23 +243,15 @@ struct ContentView: View {
             URLSession.shared.dataTask(with: request).resume()
         }
 
-        // Clear all cookies
-        let dataStore = WKWebsiteDataStore.default()
-        dataStore.httpCookieStore.getAllCookies { cookies in
-            for cookie in cookies {
-                dataStore.httpCookieStore.delete(cookie)
-            }
-        }
-
         // Remove community webviews
         for tab in tabs where tab.id != "console" {
             if let wv = manager.webViews.removeValue(forKey: tab.id) {
-                wv.superview?.removeFromSuperview()
+                wv.removeFromSuperview()
             }
             manager.loadedTabs.remove(tab.id)
         }
 
-        // Reset state
+        // Reset state — don't reload console, the web app already navigated to login
         manager.communitiesFetched = false
         tabs = [Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng")]
         selectedTabId = "console"
@@ -263,7 +298,6 @@ struct MultiWebView: UIViewRepresentable {
     let manager: WebViewManager
     let tabs: [Tab]
     let selectedTabId: String
-    let onCommunitiesLoaded: ([(slug: String, name: String)]) -> Void
     var onCrossTabNavigation: ((String) -> Void)?
     var onLogout: (() -> Void)?
 
@@ -275,7 +309,6 @@ struct MultiWebView: UIViewRepresentable {
 
     func updateUIView(_ container: UIView, context: Context) {
         let coordinator = context.coordinator
-        coordinator.onCommunitiesLoaded = onCommunitiesLoaded
         coordinator.onCrossTabNavigation = onCrossTabNavigation
         coordinator.onLogout = onLogout
 
@@ -284,12 +317,7 @@ struct MultiWebView: UIViewRepresentable {
             if let existing = manager.webViews[tab.id] {
                 wv = existing
             } else {
-                let config = WKWebViewConfiguration()
-                if tab.id == "console" {
-                    let weakHandler = WeakScriptMessageHandler(delegate: coordinator)
-                    config.userContentController.add(weakHandler, name: "communities")
-                }
-                wv = WKWebView(frame: container.bounds, configuration: config)
+                wv = WKWebView(frame: container.bounds)
                 wv.autoresizingMask = [.flexibleWidth, .flexibleHeight]
                 wv.allowsBackForwardNavigationGestures = true
                 wv.navigationDelegate = coordinator
@@ -324,9 +352,8 @@ struct MultiWebView: UIViewRepresentable {
         Coordinator(manager: manager)
     }
 
-    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+    class Coordinator: NSObject, WKNavigationDelegate {
         let manager: WebViewManager
-        var onCommunitiesLoaded: ([(slug: String, name: String)]) -> Void = { _ in }
         var onCrossTabNavigation: ((String) -> Void)?
         var onLogout: (() -> Void)?
         private var urlObservations: [String: NSKeyValueObservation] = [:]
@@ -343,13 +370,7 @@ struct MultiWebView: UIViewRepresentable {
                     self.manager.currentURL = wv.url?.absoluteString ?? ""
                 }
                 if tabId == "console" {
-                    if !self.manager.communitiesFetched {
-                        // Retry communities fetch on console URL changes (e.g. after login)
-                        DispatchQueue.main.async {
-                            self.fetchCommunities(from: wv)
-                        }
-                    } else {
-                        // Check if session cookie is gone (logout)
+                    if self.manager.communitiesFetched {
                         self.checkForLogout()
                     }
                 }
@@ -373,46 +394,12 @@ struct MultiWebView: UIViewRepresentable {
             }
         }
 
-        private func fetchCommunities(from webView: WKWebView) {
-            webView.evaluateJavaScript("""
-                fetch('https://api.commu.ng/console/communities/mine', { credentials: 'include' })
-                    .then(r => { if (r.ok) return r.json(); throw new Error(); })
-                    .then(data => window.webkit.messageHandlers.communities.postMessage(JSON.stringify(data)))
-                    .catch(() => {});
-            """)
-        }
-
         @objc func handleRefresh(_ sender: UIRefreshControl) {
             guard let webView = sender.superview?.superview as? WKWebView else {
                 sender.endRefreshing()
                 return
             }
             webView.reload()
-        }
-
-        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            guard message.name == "communities",
-                  let body = message.body as? String,
-                  let data = body.data(using: .utf8),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: [[String: Any]]],
-                  let communities = json["data"] else { return }
-
-            let result = communities.compactMap { c -> (slug: String, name: String)? in
-                guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
-                return (slug, name)
-            }
-            manager.communitiesFetched = true
-            DispatchQueue.main.async {
-                self.onCommunitiesLoaded(result)
-                // User is authenticated — request push notification permission
-                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-                    if granted {
-                        DispatchQueue.main.async {
-                            UIApplication.shared.registerForRemoteNotifications()
-                        }
-                    }
-                }
-            }
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -473,16 +460,3 @@ struct MultiWebView: UIViewRepresentable {
     }
 }
 
-// MARK: - WeakScriptMessageHandler
-
-class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
-    weak var delegate: WKScriptMessageHandler?
-
-    init(delegate: WKScriptMessageHandler) {
-        self.delegate = delegate
-    }
-
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        delegate?.userContentController(userContentController, didReceive: message)
-    }
-}
