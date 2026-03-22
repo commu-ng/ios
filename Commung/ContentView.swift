@@ -37,6 +37,9 @@ struct ContentView: View {
                 let tabId = findTabId(for: urlString)
                 selectedTabId = tabId
                 manager.navigate(tabId: tabId, to: urlString)
+            },
+            onLogout: {
+                handleLogout()
             }
         )
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -189,6 +192,36 @@ struct ContentView: View {
         manager.navigate(tabId: tabId, to: urlString)
     }
 
+    private func handleLogout() {
+        // Deregister push token
+        if let token = UserDefaults.standard.string(forKey: "pushToken") {
+            var request = URLRequest(url: URL(string: "https://api.commu.ng/console/devices/\(token)")!)
+            request.httpMethod = "DELETE"
+            URLSession.shared.dataTask(with: request).resume()
+        }
+
+        // Clear all cookies
+        let dataStore = WKWebsiteDataStore.default()
+        dataStore.httpCookieStore.getAllCookies { cookies in
+            for cookie in cookies {
+                dataStore.httpCookieStore.delete(cookie)
+            }
+        }
+
+        // Remove community webviews
+        for tab in tabs where tab.id != "console" {
+            if let wv = manager.webViews.removeValue(forKey: tab.id) {
+                wv.superview?.removeFromSuperview()
+            }
+            manager.loadedTabs.remove(tab.id)
+        }
+
+        // Reset state
+        manager.communitiesFetched = false
+        tabs = [Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng")]
+        selectedTabId = "console"
+    }
+
     private func findTabId(for urlString: String) -> String {
         for tab in tabs where tab.id != "console" {
             if urlString.contains("\(tab.id).commu.ng") {
@@ -232,6 +265,7 @@ struct MultiWebView: UIViewRepresentable {
     let selectedTabId: String
     let onCommunitiesLoaded: ([(slug: String, name: String)]) -> Void
     var onCrossTabNavigation: ((String) -> Void)?
+    var onLogout: (() -> Void)?
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
@@ -243,6 +277,7 @@ struct MultiWebView: UIViewRepresentable {
         let coordinator = context.coordinator
         coordinator.onCommunitiesLoaded = onCommunitiesLoaded
         coordinator.onCrossTabNavigation = onCrossTabNavigation
+        coordinator.onLogout = onLogout
 
         for tab in tabs {
             let wv: WKWebView
@@ -293,7 +328,9 @@ struct MultiWebView: UIViewRepresentable {
         let manager: WebViewManager
         var onCommunitiesLoaded: ([(slug: String, name: String)]) -> Void = { _ in }
         var onCrossTabNavigation: ((String) -> Void)?
+        var onLogout: (() -> Void)?
         private var urlObservations: [String: NSKeyValueObservation] = [:]
+        private var isCheckingLogout = false
 
         init(manager: WebViewManager) {
             self.manager = manager
@@ -305,10 +342,32 @@ struct MultiWebView: UIViewRepresentable {
                 DispatchQueue.main.async {
                     self.manager.currentURL = wv.url?.absoluteString ?? ""
                 }
-                // Retry communities fetch on console URL changes (e.g. after login)
-                if tabId == "console" && !self.manager.communitiesFetched {
+                if tabId == "console" {
+                    if !self.manager.communitiesFetched {
+                        // Retry communities fetch on console URL changes (e.g. after login)
+                        DispatchQueue.main.async {
+                            self.fetchCommunities(from: wv)
+                        }
+                    } else {
+                        // Check if session cookie is gone (logout)
+                        self.checkForLogout()
+                    }
+                }
+            }
+        }
+
+        private func checkForLogout() {
+            guard !isCheckingLogout else { return }
+            isCheckingLogout = true
+            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { [weak self] cookies in
+                guard let self else { return }
+                self.isCheckingLogout = false
+                let hasSession = cookies.contains { cookie in
+                    cookie.name == "session_token" && cookie.domain.hasSuffix("commu.ng")
+                }
+                if !hasSession {
                     DispatchQueue.main.async {
-                        self.fetchCommunities(from: wv)
+                        self.onLogout?()
                     }
                 }
             }
