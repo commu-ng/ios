@@ -57,6 +57,13 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PushNotificationTapped"))) { notification in
             handleNotificationTap(notification.userInfo)
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PushTokenUpdated"))) { _ in
+            guard let token = UserDefaults.standard.string(forKey: "pushToken") else { return }
+            let js = "window.commungNative = { pushToken: '\(token)', platform: 'ios' };"
+            for wv in manager.webViews.values {
+                wv.evaluateJavaScript(js)
+            }
+        }
     }
 
     private var homeURL: String {
