@@ -48,13 +48,6 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PushNotificationTapped"))) { notification in
             handleNotificationTap(notification.userInfo)
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PushTokenUpdated"))) { _ in
-            guard let token = UserDefaults.standard.string(forKey: "pushToken") else { return }
-            let js = "window.commungNative = { pushToken: '\(token)', platform: 'ios' };"
-            for wv in manager.webViews.values {
-                wv.evaluateJavaScript(js)
-            }
-        }
         .onAppear {
             manager.onLogin = { communities in
                 var newTabs = [tabs[0]]
@@ -277,6 +270,41 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
         }
     }
 
+    private func registerPushTokenWhenReady(sessionCookieValue: String) {
+        Task {
+            // Poll for the push token (set by AppDelegate after APNs responds)
+            for _ in 0..<10 {
+                try? await Task.sleep(for: .seconds(1))
+                if let token = UserDefaults.standard.string(forKey: "pushToken") {
+                    await registerDevice(pushToken: token, sessionCookieValue: sessionCookieValue)
+                    return
+                }
+            }
+        }
+    }
+
+    private func registerDevice(pushToken: String, sessionCookieValue: String) async {
+        var request = URLRequest(url: URL(string: "https://api.commu.ng/console/devices")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("session_token=\(sessionCookieValue)", forHTTPHeaderField: "Cookie")
+
+        let deviceModel = await MainActor.run { UIDevice.current.model }
+        let osVersion = await MainActor.run { "iOS \(UIDevice.current.systemVersion)" }
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+
+        let body: [String: String] = [
+            "push_token": pushToken,
+            "platform": "ios",
+            "device_model": deviceModel,
+            "os_version": osVersion,
+            "app_version": appVersion ?? "",
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        _ = try? await URLSession.shared.data(for: request)
+    }
+
     private func fetchCommunities(cookies: [HTTPCookie]) {
         guard let sessionCookie = cookies.first(where: { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }) else { return }
         isFetchingCommunities = true
@@ -306,12 +334,14 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
                 self.onLogin(result)
             }
 
-            // Request push notification permission
+            // Request push notification permission and register device
             let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
             if granted == true {
                 await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
+                // Wait for token to arrive, then register natively
+                self.registerPushTokenWhenReady(sessionCookieValue: sessionCookie.value)
             }
         }
     }
@@ -412,10 +442,6 @@ struct MultiWebView: UIViewRepresentable {
             if !webView.isHidden {
                 manager.isLoading = false
             }
-            if let token = UserDefaults.standard.string(forKey: "pushToken") {
-                webView.evaluateJavaScript("window.commungNative = { pushToken: '\(token)', platform: 'ios' };")
-            }
-
             // Trigger cookie check after page load as fallback
             // (cookiesDidChange may not fire for httpOnly Set-Cookie headers)
             if !manager.communitiesFetched, manager.webViews["console"] === webView {
