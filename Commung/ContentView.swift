@@ -28,9 +28,6 @@ struct ContentView: View {
                 let tabId = findTabId(for: urlString)
                 selectedTabId = tabId
                 manager.navigate(tabId: tabId, to: urlString)
-            },
-            onLogout: {
-                handleLogout()
             }
         )
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -58,57 +55,20 @@ struct ContentView: View {
                 wv.evaluateJavaScript(js)
             }
         }
-        .task {
-            // Poll for login state by checking cookies — avoids evaluateJavaScript during navigation
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(3))
-                if !manager.communitiesFetched {
-                    await fetchCommunitiesNatively()
+        .onAppear {
+            manager.onLogin = { communities in
+                var newTabs = [tabs[0]]
+                for (slug, name) in communities {
+                    let communityUrl = "https://\(slug).commu.ng"
+                    let ssoUrl = "https://api.commu.ng/auth/sso?return_to=\(communityUrl)/"
+                    newTabs.append(Tab(id: slug, name: name, url: ssoUrl))
                 }
+                tabs = newTabs
             }
-        }
-    }
-
-    private func fetchCommunitiesNatively() async {
-        // Read session cookie from WKWebsiteDataStore
-        let cookies = await WKWebsiteDataStore.default().httpCookieStore.allCookies()
-        guard let sessionCookie = cookies.first(where: { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }) else {
-            return
-        }
-
-        // Make native HTTP request with the cookie
-        var request = URLRequest(url: URL(string: "https://api.commu.ng/console/communities/mine")!)
-        request.setValue("session_token=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
-        request.timeoutInterval = 10
-
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
-              let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: [[String: Any]]],
-              let communities = json["data"] else {
-            return
-        }
-
-        let result = communities.compactMap { c -> (slug: String, name: String)? in
-            guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
-            return (slug, name)
-        }
-
-        manager.communitiesFetched = true
-        var newTabs = [tabs[0]]
-        for (slug, name) in result {
-            let communityUrl = "https://\(slug).commu.ng"
-            let ssoUrl = "https://api.commu.ng/auth/sso?return_to=\(communityUrl)/"
-            newTabs.append(Tab(id: slug, name: name, url: ssoUrl))
-        }
-        tabs = newTabs
-
-        // Request push notification permission
-        let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
-        if granted == true {
-            await MainActor.run {
-                UIApplication.shared.registerForRemoteNotifications()
+            manager.onLogoutDetected = {
+                handleLogout()
             }
+            manager.startCookieObserver()
         }
     }
 
@@ -270,12 +230,17 @@ struct ContentView: View {
 // MARK: - WebViewManager
 
 @Observable
-class WebViewManager {
+class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
     var webViews: [String: WKWebView] = [:]
     var loadedTabs: Set<String> = []
     var communitiesFetched = false
     var currentURL: String = ""
     var isLoading = false
+
+    var onLogin: ([(slug: String, name: String)]) -> Void = { _ in }
+    var onLogoutDetected: () -> Void = {}
+
+    private var isFetchingCommunities = false
 
     func navigate(tabId: String, to urlString: String) {
         guard let wv = webViews[tabId], let url = URL(string: urlString) else { return }
@@ -290,6 +255,66 @@ class WebViewManager {
     func stopLoading(tabId: String) {
         webViews[tabId]?.stopLoading()
     }
+
+    func startCookieObserver() {
+        WKWebsiteDataStore.default().httpCookieStore.add(self)
+    }
+
+    func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+        cookieStore.getAllCookies { [weak self] cookies in
+            guard let self else { return }
+            let hasSession = cookies.contains { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }
+
+            DispatchQueue.main.async {
+                if hasSession && !self.communitiesFetched && !self.isFetchingCommunities {
+                    // Session cookie appeared — user logged in
+                    self.fetchCommunities(cookies: cookies)
+                } else if !hasSession && self.communitiesFetched {
+                    // Session cookie gone — user logged out
+                    self.onLogoutDetected()
+                }
+            }
+        }
+    }
+
+    private func fetchCommunities(cookies: [HTTPCookie]) {
+        guard let sessionCookie = cookies.first(where: { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }) else { return }
+        isFetchingCommunities = true
+
+        Task {
+            var request = URLRequest(url: URL(string: "https://api.commu.ng/console/communities/mine")!)
+            request.setValue("session_token=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
+            request.timeoutInterval = 10
+
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: [[String: Any]]],
+                  let communities = json["data"] else {
+                await MainActor.run { self.isFetchingCommunities = false }
+                return
+            }
+
+            let result = communities.compactMap { c -> (slug: String, name: String)? in
+                guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
+                return (slug, name)
+            }
+
+            await MainActor.run {
+                self.isFetchingCommunities = false
+                self.communitiesFetched = true
+                self.onLogin(result)
+            }
+
+            // Request push notification permission
+            let granted = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+            if granted == true {
+                await MainActor.run {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
+    }
 }
 
 // MARK: - MultiWebView
@@ -299,7 +324,6 @@ struct MultiWebView: UIViewRepresentable {
     let tabs: [Tab]
     let selectedTabId: String
     var onCrossTabNavigation: ((String) -> Void)?
-    var onLogout: (() -> Void)?
 
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
@@ -310,7 +334,6 @@ struct MultiWebView: UIViewRepresentable {
     func updateUIView(_ container: UIView, context: Context) {
         let coordinator = context.coordinator
         coordinator.onCrossTabNavigation = onCrossTabNavigation
-        coordinator.onLogout = onLogout
 
         for tab in tabs {
             let wv: WKWebView
@@ -355,9 +378,7 @@ struct MultiWebView: UIViewRepresentable {
     class Coordinator: NSObject, WKNavigationDelegate {
         let manager: WebViewManager
         var onCrossTabNavigation: ((String) -> Void)?
-        var onLogout: (() -> Void)?
         private var urlObservations: [String: NSKeyValueObservation] = [:]
-        private var isCheckingLogout = false
 
         init(manager: WebViewManager) {
             self.manager = manager
@@ -368,28 +389,6 @@ struct MultiWebView: UIViewRepresentable {
                 guard let self, !wv.isHidden else { return }
                 DispatchQueue.main.async {
                     self.manager.currentURL = wv.url?.absoluteString ?? ""
-                }
-                if tabId == "console" {
-                    if self.manager.communitiesFetched {
-                        self.checkForLogout()
-                    }
-                }
-            }
-        }
-
-        private func checkForLogout() {
-            guard !isCheckingLogout else { return }
-            isCheckingLogout = true
-            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { [weak self] cookies in
-                guard let self else { return }
-                self.isCheckingLogout = false
-                let hasSession = cookies.contains { cookie in
-                    cookie.name == "session_token" && cookie.domain.hasSuffix("commu.ng")
-                }
-                if !hasSession {
-                    DispatchQueue.main.async {
-                        self.onLogout?()
-                    }
                 }
             }
         }
@@ -415,6 +414,12 @@ struct MultiWebView: UIViewRepresentable {
             }
             if let token = UserDefaults.standard.string(forKey: "pushToken") {
                 webView.evaluateJavaScript("window.commungNative = { pushToken: '\(token)', platform: 'ios' };")
+            }
+
+            // Trigger cookie check after page load as fallback
+            // (cookiesDidChange may not fire for httpOnly Set-Cookie headers)
+            if !manager.communitiesFetched, manager.webViews["console"] === webView {
+                manager.cookiesDidChange(in: WKWebsiteDataStore.default().httpCookieStore)
             }
         }
 
