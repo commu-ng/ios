@@ -421,6 +421,7 @@ struct MultiWebView: UIViewRepresentable {
         let manager: WebViewManager
         var onCrossTabNavigation: ((String) -> Void)?
         private var urlObservations: [String: NSKeyValueObservation] = [:]
+        private var pullToRefreshWebViews: Set<ObjectIdentifier> = []
 
         init(manager: WebViewManager) {
             self.manager = manager
@@ -440,12 +441,8 @@ struct MultiWebView: UIViewRepresentable {
                 sender.endRefreshing()
                 return
             }
-            sender.endRefreshing()
-            if let url = webView.url {
-                webView.load(URLRequest(url: url))
-            } else {
-                webView.reload()
-            }
+            pullToRefreshWebViews.insert(ObjectIdentifier(webView))
+            webView.reload()
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -455,7 +452,13 @@ struct MultiWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            let wasPullToRefresh = pullToRefreshWebViews.remove(ObjectIdentifier(webView)) != nil
             webView.scrollView.refreshControl?.endRefreshing()
+            if wasPullToRefresh {
+                DispatchQueue.main.async {
+                    webView.scrollView.setContentOffset(.zero, animated: false)
+                }
+            }
             if !webView.isHidden {
                 manager.isLoading = false
             }
@@ -467,6 +470,7 @@ struct MultiWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            pullToRefreshWebViews.remove(ObjectIdentifier(webView))
             webView.scrollView.refreshControl?.endRefreshing()
             if !webView.isHidden {
                 manager.isLoading = false
@@ -474,6 +478,7 @@ struct MultiWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            pullToRefreshWebViews.remove(ObjectIdentifier(webView))
             webView.scrollView.refreshControl?.endRefreshing()
             if !webView.isHidden {
                 manager.isLoading = false
