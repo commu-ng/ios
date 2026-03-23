@@ -439,6 +439,7 @@ struct MultiWebView: UIViewRepresentable {
             var view: UIView? = sender
             while let current = view {
                 if let webView = current as? WKWebView {
+                    webView.scrollView.setContentOffset(.zero, animated: false)
                     webView.reload()
                     return
                 }
