@@ -440,6 +440,7 @@ struct MultiWebView: UIViewRepresentable {
                 sender.endRefreshing()
                 return
             }
+            sender.endRefreshing()
             if let url = webView.url {
                 webView.load(URLRequest(url: url))
             } else {
