@@ -428,11 +428,15 @@ struct MultiWebView: UIViewRepresentable {
         }
 
         @objc func handleRefresh(_ sender: UIRefreshControl) {
-            guard let webView = sender.superview?.superview as? WKWebView else {
-                sender.endRefreshing()
-                return
+            var view: UIView? = sender
+            while let current = view {
+                if let webView = current as? WKWebView {
+                    webView.reload()
+                    return
+                }
+                view = current.superview
             }
-            webView.reload()
+            sender.endRefreshing()
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
