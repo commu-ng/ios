@@ -239,6 +239,7 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
 
     private var isFetchingCommunities = false
     private var pushTokenTask: Task<Void, Never>?
+    private var cookieObserverStarted = false
 
     func navigate(tabId: String, to urlString: String) {
         guard let wv = webViews[tabId], let url = URL(string: urlString) else { return }
@@ -255,6 +256,8 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
     }
 
     func startCookieObserver() {
+        guard !cookieObserverStarted else { return }
+        cookieObserverStarted = true
         WKWebsiteDataStore.default().httpCookieStore.add(self)
     }
 
