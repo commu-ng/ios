@@ -459,12 +459,16 @@ struct MultiWebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             webView.scrollView.refreshControl?.endRefreshing()
-            manager.isLoading = false
+            if !webView.isHidden {
+                manager.isLoading = false
+            }
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             webView.scrollView.refreshControl?.endRefreshing()
-            manager.isLoading = false
+            if !webView.isHidden {
+                manager.isLoading = false
+            }
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
