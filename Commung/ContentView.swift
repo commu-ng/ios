@@ -421,7 +421,6 @@ struct MultiWebView: UIViewRepresentable {
         let manager: WebViewManager
         var onCrossTabNavigation: ((String) -> Void)?
         private var urlObservations: [String: NSKeyValueObservation] = [:]
-        private var pendingPullToRefresh: Set<ObjectIdentifier> = []
 
         init(manager: WebViewManager) {
             self.manager = manager
@@ -440,8 +439,11 @@ struct MultiWebView: UIViewRepresentable {
             var view: UIView? = sender
             while let current = view {
                 if let webView = current as? WKWebView {
-                    pendingPullToRefresh.insert(ObjectIdentifier(webView))
-                    webView.reload()
+                    if let url = webView.url {
+                        webView.load(URLRequest(url: url))
+                    } else {
+                        webView.reload()
+                    }
                     return
                 }
                 view = current.superview
@@ -457,9 +459,6 @@ struct MultiWebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             webView.scrollView.refreshControl?.endRefreshing()
-            if pendingPullToRefresh.remove(ObjectIdentifier(webView)) != nil {
-                webView.evaluateJavaScript("window.scrollTo(0, 0)")
-            }
             if !webView.isHidden {
                 manager.isLoading = false
             }
