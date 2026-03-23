@@ -436,19 +436,15 @@ struct MultiWebView: UIViewRepresentable {
         }
 
         @objc func handleRefresh(_ sender: UIRefreshControl) {
-            var view: UIView? = sender
-            while let current = view {
-                if let webView = current as? WKWebView {
-                    if let url = webView.url {
-                        webView.load(URLRequest(url: url))
-                    } else {
-                        webView.reload()
-                    }
-                    return
-                }
-                view = current.superview
+            guard let webView = manager.webViews.values.first(where: { $0.scrollView.refreshControl === sender }) else {
+                sender.endRefreshing()
+                return
             }
-            sender.endRefreshing()
+            if let url = webView.url {
+                webView.load(URLRequest(url: url))
+            } else {
+                webView.reload()
+            }
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
