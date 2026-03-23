@@ -191,9 +191,13 @@ struct ContentView: View {
     private func handleLogout() {
         // Deregister push token
         if let token = UserDefaults.standard.string(forKey: "pushToken") {
-            var request = URLRequest(url: URL(string: "https://api.commu.ng/console/devices/\(token)")!)
-            request.httpMethod = "DELETE"
-            URLSession.shared.dataTask(with: request).resume()
+            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+                guard let sessionCookie = cookies.first(where: { $0.name == "session_token" && $0.domain.hasSuffix("commu.ng") }) else { return }
+                var request = URLRequest(url: URL(string: "https://api.commu.ng/console/devices/\(token)")!)
+                request.httpMethod = "DELETE"
+                request.setValue("session_token=\(sessionCookie.value)", forHTTPHeaderField: "Cookie")
+                URLSession.shared.dataTask(with: request).resume()
+            }
         }
 
         // Remove community webviews
