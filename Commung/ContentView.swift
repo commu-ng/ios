@@ -238,6 +238,7 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
     var onLogoutDetected: () -> Void = {}
 
     private var isFetchingCommunities = false
+    private var pushTokenTask: Task<Void, Never>?
 
     func navigate(tabId: String, to urlString: String) {
         guard let wv = webViews[tabId], let url = URL(string: urlString) else { return }
@@ -268,6 +269,8 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
                     self.fetchCommunities(cookies: cookies)
                 } else if !hasSession && self.communitiesFetched {
                     // Session cookie gone — user logged out
+                    self.pushTokenTask?.cancel()
+                    self.pushTokenTask = nil
                     self.onLogoutDetected()
                 }
             }
@@ -275,10 +278,12 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
     }
 
     private func registerPushTokenWhenReady(sessionCookieValue: String) {
-        Task {
+        pushTokenTask?.cancel()
+        pushTokenTask = Task {
             // Poll for the push token (set by AppDelegate after APNs responds)
             for _ in 0..<10 {
                 try? await Task.sleep(for: .seconds(1))
+                if Task.isCancelled { return }
                 if let token = UserDefaults.standard.string(forKey: "pushToken") {
                     await registerDevice(pushToken: token, sessionCookieValue: sessionCookieValue)
                     return
