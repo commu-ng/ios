@@ -7,15 +7,18 @@ struct Tab: Identifiable, Equatable {
     let id: String
     let name: String
     let url: String
+    let endsAt: Date?
+    var isFinished: Bool { endsAt.map { $0 < Date() } ?? false }
 }
 
 // MARK: - ContentView
 
 struct ContentView: View {
     @State private var tabs: [Tab] = [
-        Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng")
+        Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng", endsAt: nil)
     ]
     @State private var selectedTabId = "console"
+    @State private var showFinished = false
     @State private var manager = WebViewManager()
     @State private var showCopied = false
 
@@ -51,12 +54,17 @@ struct ContentView: View {
         .onAppear {
             manager.onLogin = { communities in
                 var newTabs = [tabs[0]]
-                for (slug, name) in communities {
+                for (slug, name, endsAt) in communities {
                     let communityUrl = "https://\(slug).commu.ng"
                     let ssoUrl = "https://api.commu.ng/auth/sso?return_to=\(communityUrl)/"
-                    newTabs.append(Tab(id: slug, name: name, url: ssoUrl))
+                    newTabs.append(Tab(id: slug, name: name, url: ssoUrl, endsAt: endsAt))
                 }
-                tabs = newTabs
+                // Sort: active communities by ends_at ascending, then finished by ends_at descending
+                let consoleTabs = newTabs.filter { $0.id == "console" }
+                let communityTabs = newTabs.filter { $0.id != "console" }
+                let activeTabs = communityTabs.filter { !$0.isFinished }.sorted { ($0.endsAt ?? .distantFuture) < ($1.endsAt ?? .distantFuture) }
+                let finishedTabs = communityTabs.filter { $0.isFinished }.sorted { ($0.endsAt ?? .distantPast) > ($1.endsAt ?? .distantPast) }
+                tabs = consoleTabs + activeTabs + finishedTabs
             }
             manager.onLogoutDetected = {
                 handleLogout()
@@ -153,11 +161,24 @@ struct ContentView: View {
         .background(.ultraThinMaterial)
     }
 
+    private var visibleTabs: [Tab] {
+        if showFinished {
+            return tabs
+        }
+        // Always show console tab, active tabs, and the currently selected tab (even if finished)
+        return tabs.filter { $0.id == "console" || !$0.isFinished || $0.id == selectedTabId }
+    }
+
+    private var hasFinishedTabs: Bool {
+        tabs.contains { $0.id != "console" && $0.isFinished }
+    }
+
     private var tabBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(tabs) { tab in
+                ForEach(visibleTabs) { tab in
                     let isSelected = selectedTabId == tab.id
+                    let isFinished = tab.isFinished
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             selectedTabId = tab.id
@@ -166,9 +187,26 @@ struct ContentView: View {
                         Text(tab.name)
                             .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                             .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                            .opacity(isFinished && !isSelected ? 0.5 : 1.0)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(isSelected ? Color.accentColor.opacity(0.12) : Color(.systemGray6))
+                            .clipShape(Capsule())
+                    }
+                }
+
+                if hasFinishedTabs {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showFinished.toggle()
+                        }
+                    } label: {
+                        Image(systemName: showFinished ? "archivebox.fill" : "archivebox")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(Color(.systemGray6))
                             .clipShape(Capsule())
                     }
                 }
@@ -210,7 +248,7 @@ struct ContentView: View {
 
         // Reset state — don't reload console, the web app already navigated to login
         manager.communitiesFetched = false
-        tabs = [Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng")]
+        tabs = [Tab(id: "console", name: NSLocalizedString("nav.console", comment: ""), url: "https://commu.ng", endsAt: nil)]
         selectedTabId = "console"
     }
 
@@ -234,7 +272,7 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
     var currentURL: String = ""
     var isLoading = false
 
-    var onLogin: ([(slug: String, name: String)]) -> Void = { _ in }
+    var onLogin: ([(slug: String, name: String, endsAt: Date?)]) -> Void = { _ in }
     var onLogoutDetected: () -> Void = {}
 
     private var isFetchingCommunities = false
@@ -335,9 +373,12 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
                 return
             }
 
-            let result = communities.compactMap { c -> (slug: String, name: String)? in
+            let iso8601 = ISO8601DateFormatter()
+            iso8601.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let result = communities.compactMap { c -> (slug: String, name: String, endsAt: Date?)? in
                 guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
-                return (slug, name)
+                let endsAt = (c["ends_at"] as? String).flatMap { iso8601.date(from: $0) }
+                return (slug, name, endsAt)
             }
 
             await MainActor.run {
