@@ -373,11 +373,13 @@ class WebViewManager: NSObject, WKHTTPCookieStoreObserver {
                 return
             }
 
-            let iso8601 = ISO8601DateFormatter()
-            iso8601.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dateFormatter = DateFormatter()
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            // Drizzle returns timestamps like "2026-01-23 00:00:00+09"
+            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ssxx"
             let result = communities.compactMap { c -> (slug: String, name: String, endsAt: Date?)? in
                 guard let slug = c["slug"] as? String, let name = c["name"] as? String else { return nil }
-                let endsAt = (c["ends_at"] as? String).flatMap { iso8601.date(from: $0) }
+                let endsAt = (c["ends_at"] as? String).flatMap { dateFormatter.date(from: $0) }
                 return (slug, name, endsAt)
             }
 
