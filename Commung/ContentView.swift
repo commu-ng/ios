@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var showFinished = false
     @State private var manager = WebViewManager()
     @State private var showCopied = false
+    @State private var pendingNotificationURL: String?
 
     var body: some View {
         MultiWebView(
@@ -65,6 +66,13 @@ struct ContentView: View {
                 let activeTabs = communityTabs.filter { !$0.isFinished }.sorted { ($0.endsAt ?? .distantFuture) < ($1.endsAt ?? .distantFuture) }
                 let finishedTabs = communityTabs.filter { $0.isFinished }.sorted { ($0.endsAt ?? .distantPast) > ($1.endsAt ?? .distantPast) }
                 tabs = consoleTabs + activeTabs + finishedTabs
+
+                if let urlString = pendingNotificationURL {
+                    pendingNotificationURL = nil
+                    let tabId = findTabId(for: urlString)
+                    selectedTabId = tabId
+                    manager.navigate(tabId: tabId, to: urlString)
+                }
             }
             manager.onLogoutDetected = {
                 handleLogout()
@@ -220,6 +228,11 @@ struct ContentView: View {
     private func handleNotificationTap(_ userInfo: [AnyHashable: Any]?) {
         guard let userInfo = userInfo,
               let urlString = userInfo["url"] as? String else { return }
+
+        if !manager.communitiesFetched {
+            pendingNotificationURL = urlString
+            return
+        }
 
         let tabId = findTabId(for: urlString)
         selectedTabId = tabId
